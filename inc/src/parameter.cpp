@@ -1,8 +1,8 @@
-#include <string>
-#include <vector>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <algorithm>
+#include <string>
+#include <vector>
 
 
 #include "../hdr/parameter.hpp"
@@ -120,20 +120,20 @@ fpar_set::fpar_set(string option)
 	if(option == "TAU1")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 1.0;
-		this->omegaLP.par_dbl = 2.0 * M_PI / 1.0;
+		this->tau.par_dbl = 2.0;
+		this->wLP.par_dbl = 2.0 * M_PI / 1.0;
 	}
 	else if(option == "TAU2")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 2.0;
-		this->omegaLP.par_dbl = 2.0 * M_PI / 1.0;
+		this->tau.par_dbl = 3.0;
+		this->wLP.par_dbl = 2.0 * M_PI / 3.0;
 	}
 	else if(option == "TAU5")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 5.0;
-		this->omegaLP.par_dbl = 2.0 * M_PI / 1.0;
+		this->tau.par_dbl = 6.0;
+		this->wLP.par_dbl = 2.0 * M_PI / 6.0;
 	}
 	else if(option == "def")
 	{
@@ -150,8 +150,8 @@ std::vector<par> fpar_set::collect()
 		
 		collection.push_back(this->K);
 		collection.push_back(this->tau);
-		collection.push_back(this->omegaLP);
-		
+		collection.push_back(this->wLP);
+
 		return collection;
 }
 
@@ -176,8 +176,6 @@ ipar_set::ipar_set(string option)
 		this->out_time.par_dbl = 100.0;
 		this->dt.par_dbl = 1e-4;
 		this->sqrtdt.par_dbl = sqrt(1e-4);
-
-		this->t.par_dbl = 0.0;
 	}
 	else if(option == "def")
 	{
@@ -185,8 +183,6 @@ ipar_set::ipar_set(string option)
 		this->out_time.par_dbl = 50.0;
 		this->dt.par_dbl = 1e-3;
 		this->sqrtdt.par_dbl = sqrt(1e-3);
-		
-		this->t.par_dbl = 0.0;
 	}
 	else
 	{
@@ -202,8 +198,6 @@ vector<par> ipar_set::collect()
 	collection.push_back(this->out_time);
 	collection.push_back(this->dt);
 	collection.push_back(this->sqrtdt);
-	
-	collection.push_back(this->t);
 	
 	return collection;
 }
@@ -271,7 +265,6 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 	par_cmd cmd(argv, argv+argc);
 	
 	this->LP.a.par_dbl = cmd.get_dbl(this->LP.a.par_str, this->LP.a.par_dbl);
-	
 	this->LP.ag.par_dbl = cmd.get_dbl(this->LP.ag.par_str, this->LP.ag.par_dbl);
 	this->LP.aq.par_dbl = cmd.get_dbl(this->LP.aq.par_str, this->LP.aq.par_dbl);
 	this->LP.Jg.par_dbl = cmd.get_dbl(this->LP.Jg.par_str, this->LP.Jg.par_dbl);
@@ -286,14 +279,12 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 
 	this->FP.K.par_dbl = cmd.get_dbl(this->FP.K.par_str, this->FP.K.par_dbl);
 	this->FP.tau.par_dbl = cmd.get_dbl(this->FP.tau.par_str, this->FP.tau.par_dbl);
-	this->FP.omegaLP.par_dbl = cmd.get_dbl(this->FP.omegaLP.par_str, this->FP.omegaLP.par_dbl);
+	this->FP.wLP.par_dbl = cmd.get_dbl(this->FP.wLP.par_str, this->FP.wLP.par_dbl);
 	
 	this->IP.int_time.par_dbl = cmd.get_dbl(this->IP.int_time.par_str, this->IP.int_time.par_dbl);
 	this->IP.out_time.par_dbl = cmd.get_dbl(this->IP.out_time.par_str, this->IP.out_time.par_dbl);
 	this->IP.dt.par_dbl = cmd.get_dbl(this->IP.dt.par_str, this->IP.dt.par_dbl);
 	this->IP.sqrtdt.par_dbl = sqrt(cmd.get_dbl(this->IP.dt.par_str, sqrt(this->IP.dt.par_dbl)));;
-	
-	this->IP.t.par_dbl = cmd.get_dbl(this->IP.t.par_str, this->IP.t.par_dbl);
 }
 
 double allpar_set::larger_delay()
@@ -344,14 +335,14 @@ fpar_dbl_set::fpar_dbl_set(fpar_set FP)
 {
 	this->K = FP.K.par_dbl;
 	this->tau = FP.tau.par_dbl;
-	this->omegaLP = FP.omegaLP.par_dbl;
+	this->wLP = FP.wLP.par_dbl;
 }
 
 fpar_dbl_set::fpar_dbl_set(allpar_set AP)
 {
 	this->K = AP.FP.K.par_dbl;
 	this->tau = AP.FP.tau.par_dbl;
-	this->omegaLP = AP.FP.omegaLP.par_dbl;
+	this->wLP = AP.FP.wLP.par_dbl;
 }
 
 //###########################################
@@ -362,8 +353,6 @@ ipar_dbl_set::ipar_dbl_set(ipar_set IP)
 	this->out_time = IP.out_time.par_dbl;
 	this->dt = IP.dt.par_dbl;
 	this->sqrtdt = IP.sqrtdt.par_dbl;
-	
-	this->t = IP.t.par_dbl;
 }
 
 ipar_dbl_set::ipar_dbl_set(allpar_set AP)
@@ -372,6 +361,4 @@ ipar_dbl_set::ipar_dbl_set(allpar_set AP)
 	this->out_time = AP.IP.out_time.par_dbl;	
 	this->dt = AP.IP.dt.par_dbl;
 	this->sqrtdt = AP.IP.sqrtdt.par_dbl;
-	
-	this->t = AP.IP.t.par_dbl;
 }
