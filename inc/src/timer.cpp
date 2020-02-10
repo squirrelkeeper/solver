@@ -42,7 +42,7 @@ void timer::print_elaps(string opt)
 	{
 		cout << "com time: " << this->elaps << "s" << endl;
 	}
-	if(opt == "ms")
+	else if(opt == "ms")
 	{
 		cout << "com time: " << this->elaps * 1e3 << "ms" << endl;
 	}

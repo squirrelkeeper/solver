@@ -25,10 +25,10 @@ int main(int argc, char* argv[])
 {
 	timer total;
 	
-	this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-	allpar_set AP;
+	allpar_set *AP = new allpar_set("JAU15", "TAU1", "quick");
 	
+	AP->check_cmd_line(argc, argv);
+	AP->cout_pars(AP->collect());
 	
 
 
