@@ -54,20 +54,10 @@ public:
 
 class fpar_set
 {
-public:class cmd_line
-{
-	char **begin;
-	char **end;
 public:
-	cmd_line(char **be,char **en);
-	double get_dbl(const std::string &par_str, double dbl_default);
-	bool get_bool(const std::string &par_str, bool bool_default);
-	bool get_swp(const std::string &par_str, bool swp_default);
-
-};
 	par K{0.0, "K", "K"};
 	par tau{0.0, "tau", "\\tau"};
-	par omegaLP{0.0, "omegaLP", "\\omega_{\\text{LP}}"};
+	par wLP{0.0, "wLP", "\\omega_{\\text{LP}}"};
 
 	fpar_set(std::string option);
 
@@ -84,8 +74,6 @@ public:
 	par out_time{0.0, "out_time", "t_{\\text{out}}"};
 	par dt{0.0, "dt", "\\mathrm{d}t"};
 	par sqrtdt{sqrt(0.0), "sqrtdt", "\\sqrt{\\mathrm{d}t}"};
-
-	par t{0.0, "t", "t"};
 	
 	ipar_set(std::string option);
 	
@@ -141,7 +129,7 @@ class fpar_dbl_set
 public:
 	double K;
 	double tau;
-	double omegaLP;
+	double wLP;
   
 	fpar_dbl_set(fpar_set FP);
 	fpar_dbl_set(allpar_set AP);
@@ -154,7 +142,6 @@ class ipar_dbl_set
 public:
 	double int_time;
 	double out_time;
-	double t;
 	double dt;
 	double sqrtdt;
   
