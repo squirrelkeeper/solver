@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
 	varC X;
 	
 	integrator intor(AP);
+	intor.integrate("complex");
 	
 	
 	total.stop();
