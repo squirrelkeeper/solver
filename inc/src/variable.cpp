@@ -21,6 +21,30 @@ varC::varC(complex<double> iE, double iG, double iQ, double iJ)
 	J = iJ;
 }
 
+varC varC::operator+(const varC& a)
+{
+	varC sum;
+	
+	sum.E = a.E + this->E;
+	sum.G = a.G + this->G;
+	sum.Q = a.Q + this->Q;
+	sum.J = a.J + this->J;
+	
+	return sum;
+}
+
+varC varC::operator*(const double& a)
+{
+	varC prod;
+	
+	prod.E = a * this->E;
+	prod.G = a * this->G;
+	prod.Q = a * this->Q;
+	prod.J = a * this->J;
+	
+	return prod;
+}
+
 //###########################################
 
 var::var()
@@ -39,4 +63,30 @@ var::var(double iER, double iEI, double iG, double iQ, double iJ)
 	G = iG;
 	Q = iQ;
 	J = iJ;
+}
+
+var var::operator+(const var& a)
+{
+	var sum;
+	
+	sum.ER = a.ER + this->ER;
+	sum.EI = a.EI + this->EI;
+	sum.G = a.G + this->G;
+	sum.Q = a.Q + this->Q;
+	sum.J = a.J + this->J;
+
+	return sum;
+}
+
+var var::operator*(const double& a)
+{
+	var prod;
+	
+	prod.ER = a * this->ER;
+	prod.EI = a * this->EI;
+	prod.G = a * this->G;
+	prod.Q = a * this->Q;
+	prod.J = a * this->J;
+
+	return prod;
 }

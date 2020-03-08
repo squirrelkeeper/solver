@@ -11,6 +11,9 @@ public:
 
 	varC();
 	varC(std::complex<double> iE, double iG, double iQ, double iJ);
+	
+	varC operator+(const varC&);
+	varC operator*(const double&);
 };
 
 //###########################################
@@ -26,6 +29,9 @@ public:
 
 	var();
 	var(double iER, double iEI, double iG, double iQ, double iJ);
+	
+	var operator+(const var&);
+	var operator*(const double&);
 };
 
 #endif

@@ -44,14 +44,18 @@ public:
 	integrator(allpar_set *AP);
 	
 	timeseries integrate(std::string opt);
+	
 	void initialize(std::vector<varC> &C, std::string opt);
 	void initialize(std::vector<var> &R, std::string opt);
 	void initialize(std::vector<varC> &C, initial_condition ic);
 	void initialize(std::vector<var> &R, initial_condition ic);
+	varC derive_full(varC&, varC&, varC&, lpar_dbl_set&, fpar_dbl_set&);
 };
 
 //###########################################
 
 
+//varC derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set &l, fpar_dbl_set &f);
+//var derive_full(var &X, var &XT, var &Xtau, lpar_dbl_set &l, fpar_dbl_set &f);
 
 #endif
