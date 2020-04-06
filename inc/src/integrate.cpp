@@ -82,7 +82,7 @@ timeseries integrator::integrate(string opt)
 		
 		for(long i = 0; i < (it - res_size); i++)
 		{
-			varC dC = derive_full(this->C[pos0], this->C[pos1], this->C[pos2], lp, fp);
+			varC dC = derive_full(this->C[pos0], this->C[pos1], this->C[pos2], &lp, &fp);
 
 			this->C[pos2] = this->C[pos0] + (dC * ip.dt);
 			
@@ -114,11 +114,11 @@ timeseries integrator::integrate(string opt)
 }
 
 
-varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set &l, fpar_dbl_set &f)
+varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)
 {
 	varC dX;
 	
-	dX.E = 1.0;
+	dX.E = 1.0i;
 	
 	
 	

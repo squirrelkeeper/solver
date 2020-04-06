@@ -30,7 +30,6 @@ public:
 class lpar_set
 {
 public:
-	par a{0.0, "a", "\\alpha"};
 	par ag{0.0, "ag", "\\alpha_g"};
 	par aq{0.0, "aq", "\\alpha_q"};
 	par Jg{0.0, "Jg", "J_g"};
@@ -105,7 +104,6 @@ public:
 class lpar_dbl_set
 {
 public:
-	double a;
 	double ag;
 	double aq;
 	double Jg;

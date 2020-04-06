@@ -86,7 +86,6 @@ std::vector<par> lpar_set::collect()
 {
 	vector<par> collection;
 	
-	collection.push_back(this->a);
 	collection.push_back(this->ag);
 	collection.push_back(this->aq);
 	collection.push_back(this->Jg);
@@ -264,7 +263,6 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 {
 	par_cmd cmd(argv, argv+argc);
 	
-	this->LP.a.par_dbl = cmd.get_dbl(this->LP.a.par_str, this->LP.a.par_dbl);
 	this->LP.ag.par_dbl = cmd.get_dbl(this->LP.ag.par_str, this->LP.ag.par_dbl);
 	this->LP.aq.par_dbl = cmd.get_dbl(this->LP.aq.par_str, this->LP.aq.par_dbl);
 	this->LP.Jg.par_dbl = cmd.get_dbl(this->LP.Jg.par_str, this->LP.Jg.par_dbl);
@@ -299,7 +297,6 @@ double allpar_set::larger_delay()
 
 lpar_dbl_set::lpar_dbl_set(lpar_set LP)
 {
-	this->a = LP.a.par_dbl;
 	this->aq = LP.aq.par_dbl;
 	this->ag = LP.ag.par_dbl;
 	this->Jg = LP.Jg.par_dbl;
@@ -315,7 +312,6 @@ lpar_dbl_set::lpar_dbl_set(lpar_set LP)
 
 lpar_dbl_set::lpar_dbl_set(allpar_set AP)
 {
-	this->a = AP.LP.a.par_dbl;
 	this->aq = AP.LP.aq.par_dbl;
 	this->ag = AP.LP.ag.par_dbl;
 	this->Jg = AP.LP.Jg.par_dbl;
