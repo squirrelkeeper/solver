@@ -50,6 +50,8 @@ public:
 	void initialize(std::vector<varC> &C, initial_condition ic);
 	void initialize(std::vector<var> &R, initial_condition ic);
 	varC derive_full(varC&, varC&, varC&, lpar_dbl_set*, fpar_dbl_set*);
+	
+	double test(double);
 };
 
 //###########################################

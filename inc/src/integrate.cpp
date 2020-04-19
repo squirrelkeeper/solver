@@ -126,5 +126,8 @@ varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpa
 	return dX;
 }
 
-
+double integrator::test(double x)
+{
+	return 5.0;
+}
 

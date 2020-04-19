@@ -42,6 +42,15 @@ int main(int argc, char* argv[])
 	integrator intor(AP);
 	
 	
+	for(double x=0.0; x<10.0; x+=0.1)
+	{
+		cout << x << '\t';
+		
+		cout << intor.test(x) << '\t';
+		cout << endl;
+	}
+	
+	
 	timeseries TS;
 	TS = intor.integrate("complex");
 	
