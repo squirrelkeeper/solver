@@ -1,12 +1,10 @@
 PROG = main
 
 CC = g++
-CXXFLAGS = -std=c++17 -Wall
-DEBUGFLAGS = -g 
+CXXFLAGS = -std=c++17 -Wall -g
+DEBUGFLAGS = -g
+#LINKERFLAGS = -flto
 #-Ofast
-FASTFLAGS = -g
-LINKERFLAGS = -lboost_filesystem -I include/boost_1_70_0 -lboost_system 
-#-flto
 
 MAKEFLAGS = -s
 
@@ -28,15 +26,15 @@ PROG_OBJ = $(addprefix $(OBJPATH),$(addsuffix .o,$(PROG)))
 all: $(PROG)
 
 $(PROG): $(OBJ) $(PROG_OBJ)
-	$(CC) $(CXXFLAGS) $(FASTFLAGS) $^ -o $@
+	$(CC) $(CXXFLAGS) $^ -o $@
 
 $(OBJ): $(SRC)
 	mkdir -p $(OBJPATH)
-	$(CC) $(CXXFLAGS) $(FASTFLAGS) -c $(SRCPATH)$(addsuffix .cpp, $(notdir $(basename $@))) -I$(HDRPATH) -o $@
+	$(CC) $(CXXFLAGS) -c $(SRCPATH)$(addsuffix .cpp, $(notdir $(basename $@))) -I$(HDRPATH) -o $@
 
 $(PROG_OBJ): $(PROG).cpp
 	mkdir -p $(OBJPATH)
-	$(CC) $(CXXFLAGS) $(FASTFLAGS) -c $< -I$(HDRPATH) -o $@
+	$(CC) $(CXXFLAGS) -c $< -I$(HDRPATH) -o $@
 	
 .PHONY: clean
 clean:

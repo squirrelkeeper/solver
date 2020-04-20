@@ -16,7 +16,6 @@
 #include <thread>
 
 #include "timer.hpp"
-#include "lookup.hpp"
 #include "parameter.hpp"
 #include "variable.hpp"
 #include "integrate.hpp"
@@ -29,6 +28,7 @@ int main(int argc, char* argv[])
 {
 	timer total;
 	
+	
 	allpar_set *AP = new allpar_set("JAU15", "TAU1", "quick");
 	
 	AP->check_cmd_line(argc, argv);
@@ -37,11 +37,12 @@ int main(int argc, char* argv[])
 
 
 	
-	
+	complex<double> a = 1.0i + 6.0;
 	
 	integrator intor(AP);
-	
-	
+
+	cout << intor.test(5.0) << endl;
+/*	
 	for(double x=0.0; x<10.0; x+=0.1)
 	{
 		cout << x << '\t';
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
 	
 	timeseries TS;
 	TS = intor.integrate("complex");
-	
+*/
 	
 	total.stop();
 	total.print_elaps("s");

@@ -11,6 +11,65 @@
 using namespace std;
 
 
+
+
+static void LOOKUP_EXP_INIT()
+{
+	for(int i=0; i < LOOKUP_SAMPLES; i++)
+	{
+		LOOKUP_EXP_Y0[i] = exp(i*LOOKUP_STEP);
+    }
+
+	for(int i=0; i < LOOKUP_SAMPLES - 1; i++)
+	{
+		LOOKUP_EXP_S[i] = LOOKUP_EXP_Y0[i+1] - LOOKUP_EXP_Y0[i];
+		LOOKUP_EXP_Y0[i] = LOOKUP_EXP_Y0[i] - i * LOOKUP_EXP_S[i];
+    }
+}
+
+static void LOOKUP_SIN_INIT()
+{
+	for(int i=0; i < LOOKUP_SAMPLES; i++)
+	{
+		LOOKUP_SIN_Y0[i] = sin(i*LOOKUP_STEP);
+    }
+
+	for(int i=0; i < LOOKUP_SAMPLES - 1; i++)
+	{
+		LOOKUP_SIN_S[i] = LOOKUP_SIN_Y0[i+1] - LOOKUP_SIN_Y0[i];
+		LOOKUP_SIN_Y0[i] = LOOKUP_SIN_Y0[i] - i * LOOKUP_SIN_S[i];
+    }
+}
+
+static void LOOKUP_COS_INIT()
+{
+	for(int i=0; i < LOOKUP_SAMPLES; i++)
+	{
+		LOOKUP_COS_Y0[i] = cos(i*LOOKUP_STEP);
+    }
+
+	for(int i=0; i < LOOKUP_SAMPLES - 1; i++)
+	{
+		LOOKUP_COS_S[i] = LOOKUP_COS_Y0[i+1] - LOOKUP_COS_Y0[i];
+		LOOKUP_COS_Y0[i] = LOOKUP_COS_Y0[i] - i * LOOKUP_COS_S[i];
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//###########################################
+
+
+
 initial_condition::initial_condition()
 {
 	
@@ -114,20 +173,70 @@ timeseries integrator::integrate(string opt)
 }
 
 
-varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)
-{
-	varC dX;
-	
-	dX.E = 1.0i;
-	
-	
-	
-	
-	return dX;
-}
 
 double integrator::test(double x)
 {
-	return 5.0;
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+
+	return LOOKUP_EXP_S[0];
 }
 
+/*REPLACE START*/
+varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)
+{
+	varC d;
+
+	d.E = -1.0i*l->g*l->sqrtkap*expf(0.5*XT.G)*expf(-0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + 1.0*l->T*l->dw)*XT.E.real() + l->g*l->sqrtkap*expf(0.5*XT.G)*expf(-0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + 1.0*l->T*l->dw)*XT.E.imag() + l->g*l->sqrtkap*expf(0.5*XT.G)*expf(-0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + 1.0*l->T*l->dw)*XT.E.real() + 1.0i*l->g*l->sqrtkap*expf(0.5*XT.G)*expf(-0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + 1.0*l->T*l->dw)*XT.E.imag() - l->g*X.E.real() - 1.0i*l->g*X.E.imag();
+
+	d.G = -X.G*l->gg + l->Jg - expf(X.G - X.Q)*norm(X.E) + expf(-X.Q)*norm(X.E);
+
+	d.Q = -X.J*X.Q + X.J*l->q0 - X.Q*l->gq + l->gq*l->q0 - l->rs*norm(X.E) + l->rs*expf(-X.Q)*norm(X.E);
+
+	d.J = -X.J*f->wLP + f->K*f->wLP*norm(Xtau.E);
+
+
+	return d;
+}
+
+
+var integrator::derive_ret(var &X, var &XT, var &Xtau, var &Y, var &YT, var &Ytau, lpar_dbl_set *l, fpar_dbl_set *f)
+{
+	//X is the homogenous solution, Y the pertubation
+	var d;
+
+	d.ER = 0.5*XT.EI*YT.G*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*YT.G*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*YT.Q*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*YT.Q*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*YT.G*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*YT.G*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*YT.Q*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*YT.Q*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - Y.ER*l->g + YT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + YT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw);
+
+	d.EI = -0.5*XT.EI*YT.G*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*YT.G*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*YT.Q*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*YT.Q*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*YT.G*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*YT.G*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*YT.Q*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*YT.Q*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - Y.EI*l->g + YT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - YT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw);
+
+	d.G = -X.EI*X.EI*Y.G*expf(X.G - X.Q) + X.EI*X.EI*Y.Q*expf(X.G - X.Q) - X.EI*X.EI*Y.Q*expf(-X.Q) - 2*X.EI*Y.EI*expf(X.G - X.Q) + 2*X.EI*Y.EI*expf(-X.Q) - X.ER*X.ER*Y.G*expf(X.G - X.Q) + X.ER*X.ER*Y.Q*expf(X.G - X.Q) - X.ER*X.ER*Y.Q*expf(-X.Q) - 2*X.ER*Y.ER*expf(X.G - X.Q) + 2*X.ER*Y.ER*expf(-X.Q) - Y.G*l->gg;
+
+	d.Q = -X.EI*X.EI*Y.Q*l->rs*expf(-X.Q) - 2*X.EI*Y.EI*l->rs + 2*X.EI*Y.EI*l->rs*expf(-X.Q) - X.ER*X.ER*Y.Q*l->rs*expf(-X.Q) - 2*X.ER*Y.ER*l->rs + 2*X.ER*Y.ER*l->rs*expf(-X.Q) - X.J*Y.Q - X.Q*Y.J + Y.J*l->q0 - Y.Q*l->gq;
+
+	d.J = 2*Xtau.EI*Ytau.EI*f->K*f->wLP + 2*Xtau.ER*Ytau.ER*f->K*f->wLP - Y.J*f->wLP;
+
+
+	return d;
+}
+
+
+var integrator::derive_adj(var &X, var &XT, var &Xtau, var &Z, var &ZT, var &Ztau, lpar_dbl_set *l, fpar_dbl_set *f)
+{
+	//X is the homogenous solution, Z the adjoint pertubation
+	var d;
+
+	d.ER = -2*X.ER*Z.G*expf(X.G - X.Q) + 2*X.ER*Z.G*expf(-X.Q) - 2*X.ER*Z.Q*l->rs + 2*X.ER*Z.Q*l->rs*expf(-X.Q) + 2*Xtau.ER*Ztau.J*f->K*f->wLP - Z.ER*l->g - ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw);
+
+	d.EI = -2*X.EI*Z.G*expf(X.G - X.Q) + 2*X.EI*Z.G*expf(-X.Q) - 2*X.EI*Z.Q*l->rs + 2*X.EI*Z.Q*l->rs*expf(-X.Q) + 2*Xtau.EI*Ztau.J*f->K*f->wLP - Z.EI*l->g + ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw);
+
+	d.G = -X.EI*X.EI*Z.G*expf(X.G - X.Q) - X.ER*X.ER*Z.G*expf(X.G - X.Q) - 0.5*XT.EI*ZT.EI*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*ZT.ER*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.EI*ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*ZT.EI*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*ZT.ER*l->ag*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - Z.G*l->gg;
+
+	d.Q = X.EI*X.EI*Z.G*expf(X.G - X.Q) - X.EI*X.EI*Z.G*expf(-X.Q) - X.EI*X.EI*Z.Q*l->rs*expf(-X.Q) + X.ER*X.ER*Z.G*expf(X.G - X.Q) - X.ER*X.ER*Z.G*expf(-X.Q) - X.ER*X.ER*Z.Q*l->rs*expf(-X.Q) - X.J*Z.Q + 0.5*XT.EI*ZT.EI*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*ZT.ER*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.EI*ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*ZT.EI*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*ZT.EI*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) + 0.5*XT.ER*ZT.ER*l->aq*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*sinf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - 0.5*XT.ER*ZT.ER*l->g*l->sqrtkap*expf(0.5*XT.G - 0.5*XT.Q)*cosf(0.5*XT.G*l->ag - 0.5*XT.Q*l->aq + l->T*l->dw) - Z.Q*l->gq;
+
+	d.J = -X.Q*Z.Q - Z.J*f->wLP + Z.Q*l->q0;
+
+
+	return d;
+}
+/*REPLACE END*/

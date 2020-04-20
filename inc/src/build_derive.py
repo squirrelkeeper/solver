@@ -50,12 +50,16 @@ def repl_I(expr):
 	expr = ''.join(expr)
 	return expr
 
+########################################################################
+
 class par:
-	g, dO, T = sy.symbols('l->g l->dO l->T', positive=True)
+	g, dO, T = sy.symbols('l->g l->dw l->T', positive=True)
 	sqrtkap, ag, aq = sy.symbols('l->sqrtkap l->ag l->aq', positive=True)
 	Jg, gg = sy.symbols('l->Jg l->gg', positive=True)
 	gq, q0, rs = sy.symbols('l->gq l->q0 l->rs', positive=True)
 	wLP, K, tau = sy.symbols('f->wLP f->K f->tau', positive=True)
+
+########################################################################
 
 def R(G_T, Q_T,  p):
 	R = p.g * p.sqrtkap
@@ -75,39 +79,7 @@ def RI(G_T, Q_T, p):
 	RI*= sy.sin(0.5 * (p.aq * Q_T - p.ag * G_T) - p.dO * p.T)
 	return RI
 
-def build_derive_full(coll):
-	PsiC = coll[0]
-	dPsiC = coll[1]
-	derive_rule_full = 'varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)'
-	derive_rule_full+='\n'
-	derive_rule_full+= '{'
-	derive_rule_full+='\n\t'
-	derive_rule_full+='varC d;'
-	derive_rule_full+='\n\n'
-	for i in range(0,len(dPsiC)):
-		full_eq = '\t'
-		full_eq+= 'd.'
-		full_eq+= str(PsiC[i])[2::]
-		full_eq+=' = '
-		full_eq+= str(dPsiC[i])
-		full_eq+=';\n\n'
-		
-		full_eq = full_eq.replace('Abs(X.E)**2', 'norm(X.E)')
-		full_eq = full_eq.replace('Abs(Xtau.E)**2', 'norm(Xtau.E)')
-
-		full_eq = full_eq.replace('re(X.E)', 'X.E.real()')
-		full_eq = full_eq.replace('im(X.E)', 'X.E.imag()')
-		
-		full_eq = repl_I(full_eq)
-		full_eq = repl_square(full_eq)
-		
-		derive_rule_full+= full_eq
-	
-	derive_rule_full+='\n\treturn d;'
-	derive_rule_full+='\n'
-	derive_rule_full+= '}'
-
-	return derive_rule_full
+########################################################################
 
 def derive_full():
 	p = par()
@@ -118,14 +90,17 @@ def derive_full():
 	dQ, Q, Q_T, Q_tau = sy.symbols('d.Q X.Q XT.Q Xtau.Q', real=True)
 	dJ, J, J_T, J_tau = sy.symbols('d.J X.J XT.J Xtau.J', real=True)
 	
-	dE = -p.g * (sy.re(E) + 1.0j * sy.im(E))
-	dE+= R(G_T, Q_T, p) * E_T
+	dE = -p.g * (sy.re(E) + sy.I * sy.im(E)) + R(G_T, Q_T, p) * E_T
 	
 	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*sy.Abs(E)**2
-	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(-Q) - 1)*sy.Abs(E)**2
-	dJ = -p.wLP * J
-	dJ+= p.wLP * p.K * sy.Abs(E_tau)**2
-	
+	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*sy.Abs(E)**2
+	dJ = p.wLP * (p.K * sy.Abs(E_tau)**2 - J)
+
+	dE = sy.powsimp(sy.expand(dE))
+	dE = sy.expand(dE, complex=True)
+	dG = sy.powsimp(sy.expand(dG))
+	dQ = sy.powsimp(sy.expand(dQ))
+	dJ = sy.powsimp(sy.expand(dJ))
 	
 	Psi = sy.Matrix([E, G, Q, J])
 	dPsi = sy.Matrix([dE, dG, dQ, dJ])
@@ -133,56 +108,319 @@ def derive_full():
 	coll = [Psi, dPsi]
 	
 	return coll
+
+def build_derive_full(coll):
+	PsiC = coll[0]
+	dPsiC = coll[1]
+	rule = '\nvarC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule+='\n'
+	rule+= '{'
+	rule+='\n\t'
+	rule+='varC d;'
+	rule+='\n\n'
+	for i in range(0,len(dPsiC)):
+		eq = '\t'
+		eq+= 'd.'
+		eq+= str(PsiC[i])[2::]
+		eq+=' = '
+		eq+= str(dPsiC[i])
+		eq+=';\n\n'
+		
+		eq = eq.replace('exp(', 'expf(')
+		eq = eq.replace('sin(', 'sinf(')
+		eq = eq.replace('cos(', 'cosf(')
+		
+		eq = eq.replace('Abs(X.E)**2', 'norm(X.E)')
+		eq = eq.replace('Abs(Xtau.E)**2', 'norm(Xtau.E)')
+
+		eq = eq.replace('re(X.E)', 'X.E.real()')
+		eq = eq.replace('re(XT.E)', 'XT.E.real()')
+		eq = eq.replace('im(X.E)', 'X.E.imag()')
+		eq = eq.replace('im(XT.E)', 'XT.E.imag()')
+		
+		eq = repl_I(eq)
+		eq = repl_square(eq)
+		
+		rule+= eq
 	
+	rule+='\n\treturn d;'
+	rule+='\n'
+	rule+= '}'
+
+	return rule
+
+########################################################################
+
+def derive_ret():
+	p = par()
+	
+	dER, dEI, dG, dQ, dJ = sy.symbols('d.ER d.EI d.G d.Q d.J', real=True)
+	
+	ER, ER_T, ER_tau = sy.symbols('X.ER XT.ER Xtau.ER', real=True)
+	EI, EI_T, EI_tau = sy.symbols('X.EI XT.EI Xtau.EI', real=True)
+	G, G_T, G_tau = sy.symbols('X.G XT.G Xtau.G', real=True)
+	Q, Q_T, Q_tau = sy.symbols('X.Q XT.Q Xtau.Q', real=True)
+	J, J_T, J_tau = sy.symbols('X.J XT.J Xtau.J', real=True)
+
+	ERr, ERr_T, ERr_tau = sy.symbols('Y.ER YT.ER Ytau.ER', real=True)
+	EIr, EIr_T, EIr_tau = sy.symbols('Y.EI YT.EI Ytau.EI', real=True)
+	Gr, Gr_T, Gr_tau = sy.symbols('Y.G YT.G Ytau.G', real=True)
+	Qr, Qr_T, Qr_tau = sy.symbols('Y.Q YT.Q Ytau.Q', real=True)
+	Jr, Jr_T, Jr_tau = sy.symbols('Y.J YT.J Ytau.J', real=True)
+
+	
+	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
+	
+	dER = sy.re(dE)
+	dEI = sy.im(dE)
+	
+	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
+	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
+	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
+
+	Psi = sy.Matrix([ER, EI, G, Q, J])
+	Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
+	Psi_tau = sy.Matrix([ER_tau, EI_tau, G_tau, Q_tau, J_tau])
+
+	Psir = sy.Matrix([ERr, EIr, Gr, Qr, Jr])
+	Psir_T = sy.Matrix([ERr_T, EIr_T, Gr_T, Qr_T, Jr_T])
+	Psir_tau = sy.Matrix([ERr_tau, EIr_tau, Gr_tau, Qr_tau, Jr_tau])
+
+	dPsi = sy.Matrix([dER, dEI, dG, dQ, dJ])
+
+	A = dPsi.jacobian(Psi)
+	B = dPsi.jacobian(Psi_T)
+	C = dPsi.jacobian(Psi_tau)
+
+	dPsir = A * Psir + B * Psir_T + C * Psir_tau
+	
+	for i in range(0,len(dPsir)):
+		dPsir[i] = sy.powsimp(sy.expand(dPsir[i]))
+	
+	coll = [Psir, dPsir]
+		
+	return coll
+
+def build_derive_ret(coll):
+	Psir = coll[0]
+	dPsir = coll[1]
+	rule = '\nvar integrator::derive_ret(var &X, var &XT, var &Xtau, var &Y, var &YT, var &Ytau, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule+='\n'
+	rule+= '{'
+	rule+= '\n\t//X is the homogenous solution, Y the pertubation'
+	rule+='\n\t'
+	rule+='var d;'
+	rule+='\n\n'
+	for i in range(0,len(dPsir)):
+		eq = '\t'
+		eq+= 'd.'
+		eq+= str(Psir[i])[2::]
+		eq+=' = '
+		eq+= str(dPsir[i])
+		eq+=';\n\n'
+		
+		eq = eq.replace('exp(', 'expf(')
+		eq = eq.replace('sin(', 'sinf(')
+		eq = eq.replace('cos(', 'cosf(')
+		
+		eq = repl_square(eq)
+		
+		rule+= eq
+	
+	rule+='\n\treturn d;'
+	rule+='\n'
+	rule+= '}'
+
+	return rule
+
+########################################################################
+
+def derive_adj():
+	p = par()
+	
+	dER, dEI, dG, dQ, dJ = sy.symbols('d.ER d.EI d.G d.Q d.J', real=True)
+	
+	ER, ER_T, ER_tau = sy.symbols('X.ER XT.ER Xtau.ER', real=True)
+	EI, EI_T, EI_tau = sy.symbols('X.EI XT.EI Xtau.EI', real=True)
+	G, G_T, G_tau = sy.symbols('X.G XT.G Xtau.G', real=True)
+	Q, Q_T, Q_tau = sy.symbols('X.Q XT.Q Xtau.Q', real=True)
+	J, J_T, J_tau = sy.symbols('X.J XT.J Xtau.J', real=True)
+
+	ERa, ERa_T, ERa_tau = sy.symbols('Z.ER ZT.ER Ztau.ER', real=True)
+	EIa, EIa_T, EIa_tau = sy.symbols('Z.EI ZT.EI Ztau.EI', real=True)
+	Ga, Ga_T, Ga_tau = sy.symbols('Z.G ZT.G Ztau.G', real=True)
+	Qa, Qa_T, Qa_tau = sy.symbols('Z.Q ZT.Q Ztau.Q', real=True)
+	Ja, Ja_T, Ja_tau = sy.symbols('Z.J ZT.J Ztau.J', real=True)
+
+	
+	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
+	
+	dER = sy.re(dE)
+	dEI = sy.im(dE)
+	
+	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
+	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
+	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
+
+	Psi = sy.Matrix([ER, EI, G, Q, J])
+	Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
+	Psi_tau = sy.Matrix([ER_tau, EI_tau, G_tau, Q_tau, J_tau])
+
+	Psia = sy.Matrix([ERa, EIa, Ga, Qa, Ja])
+	Psia_T = sy.Matrix([ERa_T, EIa_T, Ga_T, Qa_T, Ja_T])
+	Psia_tau = sy.Matrix([ERa_tau, EIa_tau, Ga_tau, Qa_tau, Ja_tau])
+
+	dPsi = sy.Matrix([dER, dEI, dG, dQ, dJ])
+
+	A = dPsi.jacobian(Psi)
+	B = dPsi.jacobian(Psi_T)
+	C = dPsi.jacobian(Psi_tau)
+
+	dPsia = Psia.T * A + Psia_T.T * B + Psia_tau.T * C
+	
+	for i in range(0,len(dPsia)):
+		dPsia[i] = sy.powsimp(sy.expand(dPsia[i]))
+	
+	coll = [Psia, dPsia]
+		
+	return coll
+
+def build_derive_adj(coll):
+	Psia = coll[0]
+	dPsia = coll[1]
+	rule = '\nvar integrator::derive_adj(var &X, var &XT, var &Xtau, var &Z, var &ZT, var &Ztau, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule+='\n'
+	rule+= '{'
+	rule+= '\n\t//X is the homogenous solution, Z the adjoint pertubation'
+	rule+='\n\t'
+	rule+='var d;'
+	rule+='\n\n'
+	for i in range(0,len(dPsia)):
+		eq = '\t'
+		eq+= 'd.'
+		eq+= str(Psia[i])[2::]
+		eq+=' = '
+		eq+= str(dPsia[i])
+		eq+=';\n\n'
+		
+		eq = eq.replace('exp(', 'expf(')
+		eq = eq.replace('sin(', 'sinf(')
+		eq = eq.replace('cos(', 'cosf(')
+		
+		eq = repl_square(eq)
+		
+		rule+= eq
+	
+	rule+='\n\treturn d;'
+	rule+='\n'
+	rule+= '}'
+
+	return rule
+
+########################################################################
+
+def bilinear():
+	p = par()
+	
+	dER, dEI, dG, dQ, dJ = sy.symbols('d.ER d.EI d.G d.Q d.J', real=True)
+	
+	ER, ER_T, ER_tau = sy.symbols('X[t].ER X[t+r].ER X[t+r].ER', real=True)
+	EI, EI_T, EI_tau = sy.symbols('X[t].EI X[t+r].EI X[t+r].EI', real=True)
+	G, G_T, G_tau = sy.symbols('X[t].G X[t+r].G X[t+r].G', real=True)
+	Q, Q_T, Q_tau = sy.symbols('X[t].Q X[t+r].Q X[t+r].Q', real=True)
+	J, J_T, J_tau = sy.symbols('X[t].J X[t+r].J X[t+r].J', real=True)
+
+	ERr, ERr_T, ERr_tau = sy.symbols('Y[t].ER Y[t+r].ER Y[t+r].ER', real=True)
+	EIr, EIr_T, EIr_tau = sy.symbols('Y[t].EI Y[t+r].EI Y[t+r].EI', real=True)
+	Gr, Gr_T, Gr_tau = sy.symbols('Y[t].G Y[t+r].G Y[t+r].G', real=True)
+	Qr, Qr_T, Qr_tau = sy.symbols('Y[t].Q Y[t+r].Q Y[t+r].Q', real=True)
+	Jr, Jr_T, Jr_tau = sy.symbols('Y[t].J Y[t+r].J Y[t+r].J', real=True)
+
+	ERa, ERa_T, ERa_tau = sy.symbols('Z[t].ER Z[t+r+T].ER Z[t+r+tau].ER', real=True)
+	EIa, EIa_T, EIa_tau = sy.symbols('Z[t].EI Z[t+r+T].EI Z[t+r+tau].EI', real=True)
+	Ga, Ga_T, Ga_tau = sy.symbols('Z[t].G Z[t+r+T].G Z[t+r+tau].G', real=True)
+	Qa, Qa_T, Qa_tau = sy.symbols('Z[t].Q Z[t+r+T].Q Z[t+r+tau].Q', real=True)
+	Ja, Ja_T, Ja_tau = sy.symbols('Z[t].J Z[t+r+T].J Z[t+r+tau].J', real=True)
+	
+	
+	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
+	
+	dER = sy.re(dE)
+	dEI = sy.im(dE)
+	
+	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
+	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
+	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
+
+	Psi = sy.Matrix([ER, EI, G, Q, J])
+	Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
+	Psi_tau = sy.Matrix([ER_tau, EI_tau, G_tau, Q_tau, J_tau])
+
+	Psir = sy.Matrix([ERr, EIr, Gr, Qr, Jr])
+	Psir_T = sy.Matrix([ERr_T, EIr_T, Gr_T, Qr_T, Jr_T])
+	Psir_tau = sy.Matrix([ERr_tau, EIr_tau, Gr_tau, Qr_tau, Jr_tau])
+
+	Psia = sy.Matrix([ERa, EIa, Ga, Qa, Ja])
+	Psia_T = sy.Matrix([ERa_T, EIa_T, Ga_T, Qa_T, Ja_T])
+	Psia_tau = sy.Matrix([ERa_tau, EIa_tau, Ga_tau, Qa_tau, Ja_tau])
+
+	dPsi = sy.Matrix([dER, dEI, dG, dQ, dJ])
+
+	B = dPsi.jacobian(Psi_T)
+	C = dPsi.jacobian(Psi_tau)
+
+	Asum = Psia.T * Psir
+	Bsum = Psia_T.T * B * Psir_T
+	Csum = Psia_tau.T * C * Psir_tau
+	
+	coll = [Asum,Bsum,Csum]
+	
+	return coll
+
+def build_bilinear(coll):
+	A = coll[0]
+	B = coll[1]
+	C = coll[2]
+	rule = '\ndouble integrator::bilinear_step(vector<var> X, vector<var> Y, vector<var> Z, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule+='\n'
+	rule+= '{'
+	rule+= '\n\t//X is the homogenous solution, Y the pertubation, Z the adjoint pertubation'
+	rule+='\n\t'
+	rule+='double b = 0.0;'
+	rule+='\n\n'
+	rule+='b+='+str(A[0])+';'
+	
+	'''
+	for i in range(0,len(dPsia)):
+		eq = '\t'
+		eq+= 'd.'
+		eq+= str(Psia[i])[2::]
+		eq+=' = '
+		eq+= str(dPsia[i])
+		eq+=';\n\n'
+		
+		eq = eq.replace('exp(', 'expf(')
+		eq = eq.replace('sin(', 'sinf(')
+		eq = eq.replace('cos(', 'cosf(')
+		
+		eq = repl_square(eq)
+		
+		rule+= eq
+	'''
+	rule+='\n\treturn b;'
+	rule+='\n'
+	rule+= '}'
+
+	return rule
+
+
+
+
+
 
 sy.init_printing(use_unicode=True)
 
-p = par()
-
-dER, ER, ER_T, ER_tau= sy.symbols('d.ER X.ER XT.ER Xtau.ER', real=True)
-ERr, ERr_T, ERr_tau= sy.symbols('Y.ER YT.ER Ytau.ER', real=True)
-
-dEI, EI, EI_T, EI_tau= sy.symbols('d.EI X.EI XT.EI Xtau.EI', real=True)
-EIr, EIr_T, EIr_tau= sy.symbols('Y.EI YT.EI Ytau.EI', real=True)
-
-dG, G, G_T, G_tau= sy.symbols('d.G X.G XT.G Xtau.G', real=True)
-Gr, Gr_T, Gr_tau= sy.symbols('Y.G YT.G Ytau.G', real=True)
-
-dQ, Q, Q_T, Q_tau= sy.symbols('d.Q X.Q XT.Q Xtau.Q', real=True)
-Qr, Qr_T, Qr_tau= sy.symbols('Y.Q YT.Q Ytau.Q', real=True)
-
-dJ, J, J_T, J_tau= sy.symbols('d.J X.J XT.J Xtau.J', real=True)
-Jr, Jr_T, Jr_tau= sy.symbols('Y.J YT.J Ytau.J', real=True)
-
-
-dER = sy.re(-p.g * (ER + 1.0j * EI))
-dER+= RR(G_T, Q_T, p) * ER_T - RI(G_T, Q_T, p) * EI_T
-
-dEI = sy.im(-p.g * (ER + 1.0j * EI))
-dEI+= RR(G_T, Q_T, p) * EI_T + RI(G_T, Q_T, p) * ER_T
-
-dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER*ER+EI*EI)
-dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(-Q) - 1)*(ER*ER+EI*EI)
-dJ = -p.wLP * J
-dJ+= p.wLP * p.K * (ER_tau*ER_tau+EI_tau*EI_tau)
-
-
-Psi = sy.Matrix([ER, EI, G, Q, J])
-Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
-Psi_tau = sy.Matrix([ER_tau, EI_tau, G_tau, Q_tau, J_tau])
-
-Psir = sy.Matrix([ERr, EIr, Gr, Qr, Jr])
-Psir_T = sy.Matrix([ERr_T, EIr_T, Gr_T, Qr_T, Jr_T])
-Psir_tau = sy.Matrix([ERr_tau, EIr_tau, Gr_tau, Qr_tau, Jr_tau])
-
-dPsi = sy.Matrix([dER, dEI, dG, dQ, dJ])
-
-A = dPsi.jacobian(Psi)
-B = dPsi.jacobian(Psi_T)
-C = dPsi.jacobian(Psi_tau)
-
-dPsir = A * Psir + B * Psir_T + C * Psir_tau
-
+print(build_bilinear(bilinear()))
 
 '''
 
@@ -198,44 +436,6 @@ dPsia = Psi.T * A + Psi_T.T * B + Psi_tau.T * C
 BIL_1 = Psi.T * Psi
 BIL_2 = Psi.T
 BIL_3 = 6
-
-
-'''
-
-
-
-
-derive_rule_ret = ''
-'''
-derive_rule_full = 'varC integrator::derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)'
-derive_rule_full+='\n'
-derive_rule_full+= '{'
-derive_rule_full+='\n\t'
-derive_rule_full+='varC dX;'
-derive_rule_full+='\n\n'
-
-for i in range(0,len(dPsi)):
-	full_eq = '\t'
-	full_eq+= 'dX.'
-	full_eq+= str(Psir[i])
-	full_eq+=' = '
-	full_eq+= str(dPsir[i])
-	full_eq+=';\n\n'
-	
-#	full_eq = full_eq.replace('Abs(E)**2', 'norm(E)')
-#	full_eq = full_eq.replace('Abs(E_tau)**2', 'norm(E_tau)')
-
-#	full_eq = full_eq.replace('re(E)', 'E.real()')
-#	full_eq = full_eq.replace('im(E)', 'E.imag()')
-	
-#	full_eq = repl_I(full_eq)
-#	full_eq = repl_square(full_eq)
-	
-	derive_rule_ret+= full_eq
-
-derive_rule_full+='\n\treturn dX;'
-derive_rule_full+='\n'
-derive_rule_full+= '}'
 '''
 
 
@@ -245,15 +445,32 @@ derive_rule_full+= '}'
 
 
 
+all_func = ''
 
-func_derive_full = build_derive_full(derive_full())
+all_func+= build_derive_full(derive_full())
+all_func+= '\n\n'
+all_func+= build_derive_ret(derive_ret())
+all_func+= '\n\n'
+all_func+= build_derive_adj(derive_adj())
 
 
-#print(func_derive_full)
 
-file_cpp = open("derive.cpp", "w")
-file_cpp.write(func_derive_full)
+
+
+
+
+
+file_cpp = open("integrate.cpp", "rt")
+file_txt = file_cpp.read()
+
+repl_begin = file_txt.find("/*REPLACE START*/")+17
+repl_end = file_txt.find("/*REPLACE END*/")-1
+
+to_replace = file_txt[repl_begin:repl_end:]
+
+file_txt = file_txt.replace(to_replace, all_func)
 file_cpp.close()
 
-
-
+file_cpp = open("integrate.cpp", "wt")
+file_cpp.write(file_txt)
+file_cpp.close()
