@@ -120,6 +120,7 @@ public:
 	varC derive_full(varC&, varC&, varC&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_adj(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	double bilinear_step(vector<var>&, vector<var>&, vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
 
 
 	

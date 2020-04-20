@@ -321,33 +321,33 @@ def build_derive_adj(coll):
 
 def bilinear():
 	p = par()
-	
+
 	dER, dEI, dG, dQ, dJ = sy.symbols('d.ER d.EI d.G d.Q d.J', real=True)
-	
-	ER, ER_T, ER_tau = sy.symbols('X[t].ER X[t+r].ER X[t+r].ER', real=True)
-	EI, EI_T, EI_tau = sy.symbols('X[t].EI X[t+r].EI X[t+r].EI', real=True)
-	G, G_T, G_tau = sy.symbols('X[t].G X[t+r].G X[t+r].G', real=True)
-	Q, Q_T, Q_tau = sy.symbols('X[t].Q X[t+r].Q X[t+r].Q', real=True)
-	J, J_T, J_tau = sy.symbols('X[t].J X[t+r].J X[t+r].J', real=True)
 
-	ERr, ERr_T, ERr_tau = sy.symbols('Y[t].ER Y[t+r].ER Y[t+r].ER', real=True)
-	EIr, EIr_T, EIr_tau = sy.symbols('Y[t].EI Y[t+r].EI Y[t+r].EI', real=True)
-	Gr, Gr_T, Gr_tau = sy.symbols('Y[t].G Y[t+r].G Y[t+r].G', real=True)
-	Qr, Qr_T, Qr_tau = sy.symbols('Y[t].Q Y[t+r].Q Y[t+r].Q', real=True)
-	Jr, Jr_T, Jr_tau = sy.symbols('Y[t].J Y[t+r].J Y[t+r].J', real=True)
+	ER, ER_T, ER_tau = sy.symbols('X.ER XT.ER Xtau.ER', real=True)
+	EI, EI_T, EI_tau = sy.symbols('X.EI XT.EI Xtau.EI', real=True)
+	G, G_T, G_tau = sy.symbols('X.G XT.G Xtau.G', real=True)
+	Q, Q_T, Q_tau = sy.symbols('X.Q XT.Q Xtau.Q', real=True)
+	J, J_T, J_tau = sy.symbols('X.J XT.J Xtau.J', real=True)
 
-	ERa, ERa_T, ERa_tau = sy.symbols('Z[t].ER Z[t+r+T].ER Z[t+r+tau].ER', real=True)
-	EIa, EIa_T, EIa_tau = sy.symbols('Z[t].EI Z[t+r+T].EI Z[t+r+tau].EI', real=True)
-	Ga, Ga_T, Ga_tau = sy.symbols('Z[t].G Z[t+r+T].G Z[t+r+tau].G', real=True)
-	Qa, Qa_T, Qa_tau = sy.symbols('Z[t].Q Z[t+r+T].Q Z[t+r+tau].Q', real=True)
-	Ja, Ja_T, Ja_tau = sy.symbols('Z[t].J Z[t+r+T].J Z[t+r+tau].J', real=True)
-	
-	
+	ERr, ERr_T, ERr_tau = sy.symbols('Y.ER YT.ER Ytau.ER', real=True)
+	EIr, EIr_T, EIr_tau = sy.symbols('Y.EI YT.EI Ytau.EI', real=True)
+	Gr, Gr_T, Gr_tau = sy.symbols('Y.G YT.G Ytau.G', real=True)
+	Qr, Qr_T, Qr_tau = sy.symbols('Y.Q YT.Q Ytau.Q', real=True)
+	Jr, Jr_T, Jr_tau = sy.symbols('Y.J YT.J Ytau.J', real=True)
+
+	ERa, ERa_T, ERa_tau = sy.symbols('Z.ER ZT.ER Ztau.ER', real=True)
+	EIa, EIa_T, EIa_tau = sy.symbols('Z.EI ZT.EI Ztau.EI', real=True)
+	Ga, Ga_T, Ga_tau = sy.symbols('Z.G ZT.G Ztau.G', real=True)
+	Qa, Qa_T, Qa_tau = sy.symbols('Z.Q ZT.Q Ztau.Q', real=True)
+	Ja, Ja_T, Ja_tau = sy.symbols('Z.J ZT.J Ztau.J', real=True)
+
+
 	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
-	
+
 	dER = sy.re(dE)
 	dEI = sy.im(dE)
-	
+
 	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
 	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
 	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
@@ -372,23 +372,101 @@ def bilinear():
 	Asum = Psia.T * Psir
 	Bsum = Psia_T.T * B * Psir_T
 	Csum = Psia_tau.T * C * Psir_tau
-	
+
 	coll = [Asum,Bsum,Csum]
 	
 	return coll
 
 def build_bilinear(coll):
-	A = coll[0]
-	B = coll[1]
-	C = coll[2]
-	rule = '\ndouble integrator::bilinear_step(vector<var> X, vector<var> Y, vector<var> Z, lpar_dbl_set *l, fpar_dbl_set *f)'
+	eq = [str(coll[0][0]),str(coll[1][0]),str(coll[2][0])]
+	
+	for i in range(0,len(eq)):
+		eq[i] = eq[i].replace('exp(', 'expf(')
+		eq[i] = eq[i].replace('sin(', 'sinf(')
+		eq[i] = eq[i].replace('cos(', 'cosf(')
+		
+		
+		eq[i] = eq[i].replace('X.ER', 'X[t].ER')
+		eq[i] = eq[i].replace('X.EI', 'X[t].EI')
+		eq[i] = eq[i].replace('X.G', 'X[t].G')
+		eq[i] = eq[i].replace('X.Q', 'X[t].Q')
+		eq[i] = eq[i].replace('X.J', 'X[t].J')
+		
+		eq[i] = eq[i].replace('Y.ER', 'Y[t].ER')
+		eq[i] = eq[i].replace('Y.EI', 'Y[t].EI')
+		eq[i] = eq[i].replace('Y.G', 'Y[t].G')
+		eq[i] = eq[i].replace('Y.Q', 'Y[t].Q')
+		eq[i] = eq[i].replace('Y.J', 'Y[t].J')
+		
+		eq[i] = eq[i].replace('Z.ER', 'Z[t].ER')
+		eq[i] = eq[i].replace('Z.EI', 'Z[t].EI')
+		eq[i] = eq[i].replace('Z.G', 'Z[t].G')
+		eq[i] = eq[i].replace('Z.Q', 'Z[t].Q')
+		eq[i] = eq[i].replace('Z.J', 'Z[t].J')
+		
+		eq[i] = eq[i].replace('XT.ER', 'X[t+r].ER')
+		eq[i] = eq[i].replace('XT.EI', 'X[t+r].EI')
+		eq[i] = eq[i].replace('XT.G', 'X[t+r].G')
+		eq[i] = eq[i].replace('XT.Q', 'X[t+r].Q')
+		eq[i] = eq[i].replace('XT.J', 'X[t+r].J')
+		
+		eq[i] = eq[i].replace('YT.ER', 'Y[t+r].ER')
+		eq[i] = eq[i].replace('YT.EI', 'Y[t+r].EI')
+		eq[i] = eq[i].replace('YT.G', 'Y[t+r].G')
+		eq[i] = eq[i].replace('YT.Q', 'Y[t+r].Q')
+		eq[i] = eq[i].replace('YT.J', 'Y[t+r].J')
+		
+		eq[i] = eq[i].replace('ZT.ER', 'Z[t+r+T].ER')
+		eq[i] = eq[i].replace('ZT.EI', 'Z[t+r+T].EI')
+		eq[i] = eq[i].replace('ZT.G', 'Z[t+r+T].G')
+		eq[i] = eq[i].replace('ZT.Q', 'Z[t+r+T].Q')
+		eq[i] = eq[i].replace('ZT.J', 'Z[t+r+T].J')
+		
+		eq[i] = eq[i].replace('Xtau.ER', 'X[t+r].ER')
+		eq[i] = eq[i].replace('Xtau.EI', 'X[t+r].EI')
+		eq[i] = eq[i].replace('Xtau.G', 'X[t+r].G')
+		eq[i] = eq[i].replace('Xtau.Q', 'X[t+r].Q')
+		eq[i] = eq[i].replace('Xtau.J', 'X[t+r].J')
+		
+		eq[i] = eq[i].replace('Ytau.ER', 'Y[t+r].ER')
+		eq[i] = eq[i].replace('Ytau.EI', 'Y[t+r].EI')
+		eq[i] = eq[i].replace('Ytau.G', 'Y[t+r].G')
+		eq[i] = eq[i].replace('Ytau.Q', 'Y[t+r].Q')
+		eq[i] = eq[i].replace('Ytau.J', 'Y[t+r].J')
+		
+		eq[i] = eq[i].replace('Ztau.ER', 'Z[t+r+tau].ER')
+		eq[i] = eq[i].replace('Ztau.EI', 'Z[t+r+tau].EI')
+		eq[i] = eq[i].replace('Ztau.G', 'Z[t+r+tau].G')
+		eq[i] = eq[i].replace('Ztau.Q', 'Z[t+r+tau].Q')
+		eq[i] = eq[i].replace('Ztau.J', 'Z[t+r+tau].J')
+	
+	
+	
+	A = eq[0]
+	B = eq[1]
+	C = eq[2]
+	
+	rule = '\ndouble integrator::bilinear_step(vector<var> &X, vector<var> &Y, vector<var> &Z, lpar_dbl_set *l, fpar_dbl_set *f)'
 	rule+='\n'
 	rule+= '{'
 	rule+= '\n\t//X is the homogenous solution, Y the pertubation, Z the adjoint pertubation'
 	rule+='\n\t'
 	rule+='double b = 0.0;'
 	rule+='\n\n'
-	rule+='b+='+str(A[0])+';'
+	rule+='\tb+='+A+';\n\n'
+	
+	rule+='\tfor(long r = -T; r < 0; r++)\n'
+	rule+='\t{\n'
+	
+	rule+='\t\t'
+	rule+='b+='+B+';\n'
+	rule+='\n'
+	rule+='\t}\n'
+	
+	rule+='\t\t'
+	rule+='b+='+C+';\n'
+	rule+='\n'
+	rule+='\t}\n'
 	
 	'''
 	for i in range(0,len(dPsia)):
@@ -420,31 +498,19 @@ def build_bilinear(coll):
 
 sy.init_printing(use_unicode=True)
 
+
+
+
+
 print(build_bilinear(bilinear()))
 
+
+
+
+
+
+
 '''
-
-
-A = dPsi.jacobian(Psi)
-B = dPsi.jacobian(Psi_T)
-C = dPsi.jacobian(Psi_tau)
-
-dPsir = A * Psir + B * Psir_T + C * Psir_tau
-
-dPsia = Psi.T * A + Psi_T.T * B + Psi_tau.T * C
-
-BIL_1 = Psi.T * Psi
-BIL_2 = Psi.T
-BIL_3 = 6
-'''
-
-
-
-
-
-
-
-
 all_func = ''
 
 all_func+= build_derive_full(derive_full())
@@ -474,3 +540,4 @@ file_cpp.close()
 file_cpp = open("integrate.cpp", "wt")
 file_cpp.write(file_txt)
 file_cpp.close()
+'''
