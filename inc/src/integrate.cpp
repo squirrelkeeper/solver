@@ -94,14 +94,29 @@ integrator::integrator(allpar_set *AP)
 
 	it = (long)(ip.int_time / ip.dt);
 
-	dim1 = (long)(lp.T / ip.dt  + 0.5);
-	dim2 = (long)(fp.tau / ip.dt + 0.5);
+	if(lp.T < fp.tau)
+	{
+		dim1 = (long)(floor(lp.T / ip.dt));
+		dim2 = (long)(floor(fp.tau / ip.dt));
+		
+		pos0 = dim2-1;
+		pos1 = pos0 - dim1;
+		pos2 = 0;
+	}
+	else
+	{
+		dim1 = (long)(floor(fp.tau / ip.dt));
+		dim2 = (long)(floor(lp.T / ip.dt));
 
-	pos0 = dim1 - 1;
-	pos1 = pos0 - dim1;
-	pos2 = 0;
+		pos0 = dim2-1;
+		pos2 = pos0 - dim1;
+		pos1 = 0;
+	}
+	dim2++;
+
+
 	
-	t = 0.0;
+	time = 0.0;
 }
 
 void integrator::initialize(vector<varC> &C, string opt)
@@ -125,12 +140,17 @@ timeseries integrator::integrate(string opt)
 	
 	if(opt == "complex")
 	{
+		LOOKUP_EXP_INIT();
+		LOOKUP_COS_INIT();
+		LOOKUP_SIN_INIT();
+		
 		lpar_dbl_set lp(*this->AP);
 		fpar_dbl_set fp(*this->AP);
 		ipar_dbl_set ip(*this->AP);
 
 		this->C.resize(dim2);
-		
+	
+	
 		initialize(this->C, "ones");
 		
 		long res_size = long(ip.out_time / ip.dt + 0.5);
@@ -139,23 +159,43 @@ timeseries integrator::integrate(string opt)
 		TS.t.resize(res_size);
 		TS.I.resize(res_size);
 		
+	
 		for(long i = 0; i < (it - res_size); i++)
+		{
+			varC dC = derive_full(C[pos0], C[pos1], C[pos2], &lp, &fp);
+
+			C[pos2] = C[pos0] + dC * ip.dt;
+			
+		
+			time += ip.dt;
+			
+			pos0 = pos2;
+			pos1 = (pos1 + 1) % dim2;
+			pos2 = (pos2 + 1) % dim2;
+			
+		}
+	
+		for(long i = 0; i < res_size; i++)
 		{
 			varC dC = derive_full(this->C[pos0], this->C[pos1], this->C[pos2], &lp, &fp);
 
 			this->C[pos2] = this->C[pos0] + (dC * ip.dt);
+
+			TS.X[i] = C[pos2];			
+			TS.t[i] = time;
+			TS.I[i] = norm(C[pos2].E);
+
+			
+			
+			time += ip.dt;
 			
 			pos0 = pos2;
 			pos1 = (pos1 + 1) % dim1;
 			pos2 = (pos2 + 1) % dim2;
-		}
-
-		for(long i = 0; i < res_size; i++)
-		{
 			
+			 
 		}
-		
-		
+	
 	}
 	else if(opt == "linearized")
 	{
@@ -169,6 +209,8 @@ timeseries integrator::integrate(string opt)
 	{
 		cout << "err003" << endl;
 	}
+	
+	
 	return TS;
 }
 
@@ -238,5 +280,29 @@ var integrator::derive_adj(var &X, var &XT, var &Xtau, var &Z, var &ZT, var &Zta
 
 
 	return d;
+}
+
+
+double integrator::bilinear_step(vector<var> &X, vector<var> &Y, vector<var> &Z, lpar_dbl_set *l, fpar_dbl_set *f)
+{
+	//X is the homogenous solution, Y the pertubation, Z the adjoint pertubation
+	double b = 0.0;
+	long t = this->pos0;
+	long T = this->dim1;
+	long tau = this->dim2;
+
+	b+=Y[t].EI*Z[t].EI + Y[t].ER*Z[t].ER + Y[t].G*Z[t].G + Y[t].J*Z[t].J + Y[t].Q*Z[t].Q;
+
+	for(long r = -T; r < 0; r++)
+	{
+		b+=Y[t+r].EI*(Z[t+r+T].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + Z[t+r+T].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw)) + Y[t+r].ER*(-Z[t+r+T].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + Z[t+r+T].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw)) + Y[t+r].G*(Z[t+r+T].EI*(-0.5*X[t+r].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw)) + Z[t+r+T].ER*(0.5*X[t+r].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw))) + Y[t+r].Q*(Z[t+r+T].EI*(0.5*X[t+r].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw)) + Z[t+r+T].ER*(-0.5*X[t+r].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].EI*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) + 0.5*X[t+r].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*sinf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw) - 0.5*X[t+r].ER*l->g*l->sqrtkap*expf(0.5*X[t+r].G - 0.5*X[t+r].Q)*cosf(0.5*X[t+r].G*l->ag - 0.5*X[t+r].Q*l->aq + l->T*l->dw)));
+	}
+
+	for(long r = -tau; r < 0; r++)
+	{
+		b+=2*X[t+r].EI*Y[t+r].EI*Z[t+r+tau].J*f->K*f->wLP + 2*X[t+r].ER*Y[t+r].ER*Z[t+r+tau].J*f->K*f->wLP;
+	}
+
+	return b;
 }
 /*REPLACE END*/

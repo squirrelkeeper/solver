@@ -37,24 +37,11 @@ int main(int argc, char* argv[])
 
 
 	
-	complex<double> a = 1.0i + 6.0;
-	
 	integrator intor(AP);
-
-	cout << intor.test(5.0) << endl;
-/*	
-	for(double x=0.0; x<10.0; x+=0.1)
-	{
-		cout << x << '\t';
-		
-		cout << intor.test(x) << '\t';
-		cout << endl;
-	}
-	
 	
 	timeseries TS;
 	TS = intor.integrate("complex");
-*/
+
 	
 	total.stop();
 	total.print_elaps("s");

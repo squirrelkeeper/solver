@@ -452,6 +452,16 @@ def build_bilinear(coll):
 	rule+= '\n\t//X is the homogenous solution, Y the pertubation, Z the adjoint pertubation'
 	rule+='\n\t'
 	rule+='double b = 0.0;'
+	
+	rule+='\n\t'
+	rule+='long t = this->pos0;'
+	
+	rule+='\n\t'
+	rule+='long T = this->dim1;'
+	
+	rule+='\n\t'
+	rule+='long tau = this->dim2;'
+
 	rule+='\n\n'
 	rule+='\tb+='+A+';\n\n'
 	
@@ -460,31 +470,16 @@ def build_bilinear(coll):
 	
 	rule+='\t\t'
 	rule+='b+='+B+';\n'
-	rule+='\n'
-	rule+='\t}\n'
+	rule+='\t}'
+	rule+='\n\n'
 	
+	
+	rule+='\tfor(long r = -tau; r < 0; r++)\n'
+	rule+='\t{\n'
 	rule+='\t\t'
 	rule+='b+='+C+';\n'
-	rule+='\n'
 	rule+='\t}\n'
 	
-	'''
-	for i in range(0,len(dPsia)):
-		eq = '\t'
-		eq+= 'd.'
-		eq+= str(Psia[i])[2::]
-		eq+=' = '
-		eq+= str(dPsia[i])
-		eq+=';\n\n'
-		
-		eq = eq.replace('exp(', 'expf(')
-		eq = eq.replace('sin(', 'sinf(')
-		eq = eq.replace('cos(', 'cosf(')
-		
-		eq = repl_square(eq)
-		
-		rule+= eq
-	'''
 	rule+='\n\treturn b;'
 	rule+='\n'
 	rule+= '}'
@@ -510,7 +505,7 @@ print(build_bilinear(bilinear()))
 
 
 
-'''
+
 all_func = ''
 
 all_func+= build_derive_full(derive_full())
@@ -518,6 +513,8 @@ all_func+= '\n\n'
 all_func+= build_derive_ret(derive_ret())
 all_func+= '\n\n'
 all_func+= build_derive_adj(derive_adj())
+all_func+= '\n\n'
+all_func+= build_bilinear(bilinear())
 
 
 
@@ -540,4 +537,4 @@ file_cpp.close()
 file_cpp = open("integrate.cpp", "wt")
 file_cpp.write(file_txt)
 file_cpp.close()
-'''
+

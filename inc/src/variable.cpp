@@ -90,3 +90,16 @@ var var::operator*(const double& a)
 
 	return prod;
 }
+
+var var::operator=(const varC &C)
+{
+	var R;
+	R.ER = C.E.real();
+	R.EI = C.E.imag();
+	R.G = C.G;
+	R.Q = C.Q;
+	R.J = R.J;
+	
+	return R;
+}
+

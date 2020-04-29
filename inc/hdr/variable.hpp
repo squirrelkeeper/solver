@@ -32,6 +32,7 @@ public:
 	
 	var operator+(const var&);
 	var operator*(const double&);
+	var operator=(const varC&);
 };
 
 #endif
