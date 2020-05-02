@@ -183,6 +183,13 @@ ipar_set::ipar_set(string option)
 		this->dt.par_dbl = 1e-3;
 		this->sqrtdt.par_dbl = sqrt(1e-3);
 	}
+	else if(option == "lina")
+	{
+		this->int_time.par_dbl = 100.0;
+		this->out_time.par_dbl = 100.0;
+		this->dt.par_dbl = 1e-4;
+		this->sqrtdt.par_dbl = sqrt(1e-4);
+	}
 	else
 	{
 		cout << "err002" << endl;
@@ -292,6 +299,15 @@ double allpar_set::larger_delay()
 	double max_tau = T1 < T2 ? T2 : T1; 
 	return max_tau;
 }
+
+double allpar_set::smaller_delay()
+{
+	double T1 = this->LP.T.par_dbl;
+	double T2 = this->FP.tau.par_dbl;
+	double max_tau = T1 > T2 ? T2 : T1; 
+	return max_tau;
+}
+
 
 //###########################################
 

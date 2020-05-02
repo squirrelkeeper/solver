@@ -6,6 +6,7 @@
 
 //###########################################
 
+/*
 #define LOOKUP_SAMPLES 1000000
 #define LOOKUP_STEP 0.0001
 #define LOOKUP_INVERS_STEP 1/0.0001
@@ -67,38 +68,14 @@ inline double cosf(double x)
 }
 
 
-
-//###########################################
-
-
-class initial_condition
-{
-public:
-	std::vector<var> X;
-	double t;
-	
-	initial_condition();
-};
-
-//###########################################
-
-class timeseries
-{
-public:
-	std::vector<var> X;
-	std::vector<double> I;
-	std::vector<double> t;
-	
-	timeseries();
-};
+*/
 
 //###########################################
 
 class integrator
 {
 public:
-	std::vector<varC> C;
-	std::vector<var> R;
+	std::vector<var> X;
 	allpar_set *AP;
 	long it;
 	long dim1;
@@ -106,10 +83,11 @@ public:
 	long pos0;
 	long pos1;
 	long pos2;
-	double time;
+	double Time;
 	
 	integrator(allpar_set *AP);
-	
+
+/*	
 	timeseries integrate(std::string opt);
 	
 	void initialize(std::vector<varC> &C, std::string opt);
@@ -125,12 +103,8 @@ public:
 
 	
 	double test(double);
+
+*/
 };
-
-//###########################################
-
-
-//varC derive_full(varC &X, varC &XT, varC &Xtau, lpar_dbl_set &l, fpar_dbl_set &f);
-//var derive_full(var &X, var &XT, var &Xtau, lpar_dbl_set &l, fpar_dbl_set &f);
 
 #endif

@@ -91,6 +91,7 @@ var var::operator*(const double& a)
 	return prod;
 }
 
+/* DOESNT WORK
 var var::operator=(const varC &C)
 {
 	var R;
@@ -102,4 +103,4 @@ var var::operator=(const varC &C)
 	
 	return R;
 }
-
+*/
