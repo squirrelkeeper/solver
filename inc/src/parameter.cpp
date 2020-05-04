@@ -119,19 +119,19 @@ fpar_set::fpar_set(string option)
 	if(option == "TAU1")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 2.0;
+		this->tau.par_dbl = 1.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 1.0;
 	}
 	else if(option == "TAU2")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 3.0;
+		this->tau.par_dbl = 2.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 3.0;
 	}
 	else if(option == "TAU5")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 6.0;
+		this->tau.par_dbl = 5.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 6.0;
 	}
 	else if(option == "def")

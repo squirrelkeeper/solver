@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-data = np.loadtxt("../data/template_ts_ba3733.dat")
+data = np.loadtxt("../data/template_ts_ba298.dat")
 data = list(zip(*data))
 
 t = np.asarray(data[0])

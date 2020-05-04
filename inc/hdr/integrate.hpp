@@ -6,7 +6,7 @@
 
 //###########################################
 
-/*
+
 #define LOOKUP_SAMPLES 1000000
 #define LOOKUP_STEP 0.0001
 #define LOOKUP_INVERS_STEP 1/0.0001
@@ -68,7 +68,7 @@ inline double cosf(double x)
 }
 
 
-*/
+
 
 //###########################################
 
@@ -76,6 +76,8 @@ class integrator
 {
 public:
 	std::vector<var> X;
+	var dX;
+	var Xnew;
 	allpar_set *AP;
 	long it;
 	long dim1;
@@ -85,7 +87,11 @@ public:
 	long pos2;
 	double Time;
 	
-	integrator(allpar_set *AP);
+	integrator(allpar_set*);
+	
+	void integrate(std::vector<double>&, std::vector<var>&, std::string);
+	
+	var derive(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 
 /*	
 	timeseries integrate(std::string opt);
