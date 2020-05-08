@@ -169,14 +169,22 @@ def derive_ret():
 	Jr, Jr_T, Jr_tau = sy.symbols('Y.J YT.J Ytau.J', real=True)
 
 	
-	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
+	dER = -p.g * ER
+	dER+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.cos(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * ER_T
+	dER+= -p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.sin(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * EI_T
 	
-	dER = sy.re(dE)
-	dEI = sy.im(dE)
 	
-	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
-	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
-	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
+	dEI = -p.g * EI
+	dEI+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.cos(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * EI_T
+	dEI+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.sin(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * ER_T
+	
+	dG = p.Jg - p.gg * G 
+	dG-= sy.exp(-Q)*(sy.exp(G) - 1) * (ER*ER+EI*EI)
+	
+	dQ = (p.gq + J) * (p.q0 - Q) 
+	dQ-= p.rs * sy.exp(-Q) * (sy.exp(Q) - 1) * (ER*ER+EI*EI)
+	
+	dJ = p.wLP * (p.K * (ER_tau*ER_tau+EI_tau*EI_tau) - J)
 
 	Psi = sy.Matrix([ER, EI, G, Q, J])
 	Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
@@ -253,14 +261,23 @@ def derive_adj():
 	Ja, Ja_T, Ja_tau = sy.symbols('Z.J ZT.J Ztau.J', real=True)
 
 	
-	dE = -p.g * (ER + sy.I * EI) + (RR(G_T, Q_T, p) + sy.I * RI(G_T, Q_T, p)) * (ER_T + sy.I * EI_T)
+	dER = -p.g * ER
+	dER+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.cos(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * ER_T
+	dER+= -p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.sin(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * EI_T
 	
-	dER = sy.re(dE)
-	dEI = sy.im(dE)
 	
-	dG = p.Jg - p.gg * G - sy.exp(-Q)*(sy.exp(G) - 1)*(ER**2+EI**2)
-	dQ = (p.gq + J) * (p.q0 - Q) - p.rs * sy.exp(-Q) * (sy.exp(Q) - 1)*(ER**2+EI**2)
-	dJ = p.wLP * (p.K * (ER_tau**2+EI_tau**2) - J)
+	dEI = -p.g * EI
+	dEI+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.cos(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * EI_T
+	dEI+=  p.g * p.sqrtkap * sy.exp(0.5*(G_T-Q_T)) * sy.sin(0.5*(p.aq * Q_T - p.ag * G_T) - p.T * p.dw) * ER_T
+	
+	dG = p.Jg - p.gg * G 
+	dG-= sy.exp(-Q)*(sy.exp(G) - 1) * (ER*ER+EI*EI)
+	
+	dQ = (p.gq + J) * (p.q0 - Q) 
+	dQ-= p.rs * sy.exp(-Q) * (sy.exp(Q) - 1) * (ER*ER+EI*EI)
+	
+	dJ = p.wLP * (p.K * (ER_tau*ER_tau+EI_tau*EI_tau) - J)
+
 
 	Psi = sy.Matrix([ER, EI, G, Q, J])
 	Psi_T = sy.Matrix([ER_T, EI_T, G_T, Q_T, J_T])
@@ -386,60 +403,17 @@ def build_bilinear(coll):
 		eq[i] = eq[i].replace('cos(', 'cosf(')
 		
 		
-		eq[i] = eq[i].replace('X.ER', 'X[t].ER')
-		eq[i] = eq[i].replace('X.EI', 'X[t].EI')
-		eq[i] = eq[i].replace('X.G', 'X[t].G')
-		eq[i] = eq[i].replace('X.Q', 'X[t].Q')
-		eq[i] = eq[i].replace('X.J', 'X[t].J')
+		eq[i] = eq[i].replace('X.', 'X[pos0].')	
+		eq[i] = eq[i].replace('Y.', 'Y[pos0].')
+		eq[i] = eq[i].replace('Z.', 'Z[pos0].')
 		
-		eq[i] = eq[i].replace('Y.ER', 'Y[t].ER')
-		eq[i] = eq[i].replace('Y.EI', 'Y[t].EI')
-		eq[i] = eq[i].replace('Y.G', 'Y[t].G')
-		eq[i] = eq[i].replace('Y.Q', 'Y[t].Q')
-		eq[i] = eq[i].replace('Y.J', 'Y[t].J')
+		eq[i] = eq[i].replace('XT.', 'X[pos0+r].')		
+		eq[i] = eq[i].replace('YT.', 'Y[pos0+r].')
+		eq[i] = eq[i].replace('ZT.', 'Z[pos0+r+dim1].')
 		
-		eq[i] = eq[i].replace('Z.ER', 'Z[t].ER')
-		eq[i] = eq[i].replace('Z.EI', 'Z[t].EI')
-		eq[i] = eq[i].replace('Z.G', 'Z[t].G')
-		eq[i] = eq[i].replace('Z.Q', 'Z[t].Q')
-		eq[i] = eq[i].replace('Z.J', 'Z[t].J')
-		
-		eq[i] = eq[i].replace('XT.ER', 'X[t+r].ER')
-		eq[i] = eq[i].replace('XT.EI', 'X[t+r].EI')
-		eq[i] = eq[i].replace('XT.G', 'X[t+r].G')
-		eq[i] = eq[i].replace('XT.Q', 'X[t+r].Q')
-		eq[i] = eq[i].replace('XT.J', 'X[t+r].J')
-		
-		eq[i] = eq[i].replace('YT.ER', 'Y[t+r].ER')
-		eq[i] = eq[i].replace('YT.EI', 'Y[t+r].EI')
-		eq[i] = eq[i].replace('YT.G', 'Y[t+r].G')
-		eq[i] = eq[i].replace('YT.Q', 'Y[t+r].Q')
-		eq[i] = eq[i].replace('YT.J', 'Y[t+r].J')
-		
-		eq[i] = eq[i].replace('ZT.ER', 'Z[t+r+T].ER')
-		eq[i] = eq[i].replace('ZT.EI', 'Z[t+r+T].EI')
-		eq[i] = eq[i].replace('ZT.G', 'Z[t+r+T].G')
-		eq[i] = eq[i].replace('ZT.Q', 'Z[t+r+T].Q')
-		eq[i] = eq[i].replace('ZT.J', 'Z[t+r+T].J')
-		
-		eq[i] = eq[i].replace('Xtau.ER', 'X[t+r].ER')
-		eq[i] = eq[i].replace('Xtau.EI', 'X[t+r].EI')
-		eq[i] = eq[i].replace('Xtau.G', 'X[t+r].G')
-		eq[i] = eq[i].replace('Xtau.Q', 'X[t+r].Q')
-		eq[i] = eq[i].replace('Xtau.J', 'X[t+r].J')
-		
-		eq[i] = eq[i].replace('Ytau.ER', 'Y[t+r].ER')
-		eq[i] = eq[i].replace('Ytau.EI', 'Y[t+r].EI')
-		eq[i] = eq[i].replace('Ytau.G', 'Y[t+r].G')
-		eq[i] = eq[i].replace('Ytau.Q', 'Y[t+r].Q')
-		eq[i] = eq[i].replace('Ytau.J', 'Y[t+r].J')
-		
-		eq[i] = eq[i].replace('Ztau.ER', 'Z[t+r+tau].ER')
-		eq[i] = eq[i].replace('Ztau.EI', 'Z[t+r+tau].EI')
-		eq[i] = eq[i].replace('Ztau.G', 'Z[t+r+tau].G')
-		eq[i] = eq[i].replace('Ztau.Q', 'Z[t+r+tau].Q')
-		eq[i] = eq[i].replace('Ztau.J', 'Z[t+r+tau].J')
-	
+		eq[i] = eq[i].replace('Xtau.', 'X[pos0+r].')
+		eq[i] = eq[i].replace('Ytau.', 'Y[pos0+r].')
+		eq[i] = eq[i].replace('Ztau.', 'Z[pos0+r+dim2].')	
 	
 	
 	A = eq[0]
@@ -451,21 +425,11 @@ def build_bilinear(coll):
 	rule+= '{'
 	rule+= '\n\t//X is the homogenous solution, Y the pertubation, Z the adjoint pertubation'
 	rule+='\n\t'
-	rule+='double b = 0.0;'
-	
-	rule+='\n\t'
-	rule+='long t = this->pos0;'
-	
-	rule+='\n\t'
-	rule+='long T = this->dim1;'
-	
-	rule+='\n\t'
-	rule+='long tau = this->dim2;'
 
 	rule+='\n\n'
-	rule+='\tb+='+A+';\n\n'
+	rule+='\tdouble b = '+A+';\n\n'
 	
-	rule+='\tfor(long r = -T; r < 0; r++)\n'
+	rule+='\tfor(long r = -dim1; r < 0; r++)\n'
 	rule+='\t{\n'
 	
 	rule+='\t\t'
@@ -474,7 +438,7 @@ def build_bilinear(coll):
 	rule+='\n\n'
 	
 	
-	rule+='\tfor(long r = -tau; r < 0; r++)\n'
+	rule+='\tfor(long r = -dim2; r < 0; r++)\n'
 	rule+='\t{\n'
 	rule+='\t\t'
 	rule+='b+='+C+';\n'
@@ -488,7 +452,7 @@ def build_bilinear(coll):
 
 ########################################################################
 
-def derive_test():
+def derive_real():
 	p = par()
 	
 	dER, ER, ER_T, ER_tau = sy.symbols('d.ER X.ER XT.ER Xtau.ER', real=True)
@@ -528,11 +492,11 @@ def derive_test():
 	
 	return coll
 
-def build_derive_test(coll):
+def build_derive_real(coll):
 	PsiC = coll[0]
 	dPsiC = coll[1]
 	rule = '\n'
-	rule+='var derive_test(var &X, var &XT, var &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule+='var integrator::derive_real(var &X, var &XT, var &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)'
 	rule+='\n'
 	rule+= '{'
 	rule+='\n\t'
@@ -585,15 +549,15 @@ all_func = ''
 
 all_func+= "/*REPLACE START*/"
 
-all_func+= build_derive_test(derive_test())
-all_func+= '\n'
+all_func+= build_derive_real(derive_real())
+all_func+= '\n\n'
 #all_func+= build_derive_full(derive_full())
 #all_func+= '\n'
-#all_func+= build_derive_ret(derive_ret())
-#all_func+= '\n\n'
-#all_func+= build_derive_adj(derive_adj())
-#all_func+= '\n\n'
-#all_func+= build_bilinear(bilinear())
+all_func+= build_derive_ret(derive_ret())
+all_func+= '\n\n'
+all_func+= build_derive_adj(derive_adj())
+all_func+= '\n\n'
+all_func+= build_bilinear(bilinear())
 all_func+= "/*REPLACE END*/"
 
 
@@ -601,7 +565,7 @@ all_func+= "/*REPLACE END*/"
 
 
 
-file_cpp = open("main.cpp", "rt")
+file_cpp = open("inc/src/integrate.cpp", "rt")
 file_txt = file_cpp.read()
 
 repl_begin = file_txt.find("/*REPLACE START*/")
@@ -616,7 +580,7 @@ to_replace = file_txt[repl_begin:repl_end:]
 file_txt = file_txt.replace(to_replace, all_func)
 file_cpp.close()
 
-file_cpp = open("main.cpp", "wt")
+file_cpp = open("inc/src/integrate.cpp", "wt")
 file_cpp.write(file_txt)
 file_cpp.close()
 

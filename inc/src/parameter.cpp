@@ -119,19 +119,19 @@ fpar_set::fpar_set(string option)
 	if(option == "TAU1")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 1.0;
+		this->tau.par_dbl = 2.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 1.0;
 	}
 	else if(option == "TAU2")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 2.0;
+		this->tau.par_dbl = 3.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 3.0;
 	}
 	else if(option == "TAU5")
 	{
 		this->K.par_dbl = 1.0;
-		this->tau.par_dbl = 5.0;
+		this->tau.par_dbl = 6.0;
 		this->wLP.par_dbl = 2.0 * M_PI / 6.0;
 	}
 	else if(option == "def")
@@ -182,13 +182,6 @@ ipar_set::ipar_set(string option)
 		this->out_time.par_dbl = 50.0;
 		this->dt.par_dbl = 1e-3;
 		this->sqrtdt.par_dbl = sqrt(1e-3);
-	}
-	else if(option == "lina")
-	{
-		this->int_time.par_dbl = 100.0;
-		this->out_time.par_dbl = 100.0;
-		this->dt.par_dbl = 1e-4;
-		this->sqrtdt.par_dbl = sqrt(1e-4);
 	}
 	else
 	{
@@ -304,10 +297,9 @@ double allpar_set::smaller_delay()
 {
 	double T1 = this->LP.T.par_dbl;
 	double T2 = this->FP.tau.par_dbl;
-	double max_tau = T1 > T2 ? T2 : T1; 
-	return max_tau;
+	double min_tau = T1 > T2 ? T2 : T1; 
+	return min_tau;
 }
-
 
 //###########################################
 

@@ -97,7 +97,6 @@ public:
 	void cout_pars(std::vector<par> collection);
 	
 	void check_cmd_line(int argc, char* argv[]);
-	
 	double larger_delay();
 	double smaller_delay();
 };

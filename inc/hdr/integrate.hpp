@@ -3,6 +3,8 @@
 
 #include "../hdr/parameter.hpp"
 #include "../hdr/variable.hpp"
+#include "../hdr/timeseries.hpp"
+
 
 //###########################################
 
@@ -90,9 +92,18 @@ public:
 	integrator(allpar_set*);
 	
 	void integrate(std::vector<double>&, std::vector<var>&, std::string);
-	
-	var derive(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	timeseries integrate_simple_TS(std::string);
+	timeseries integrate_simple_TS_noise(std::string);
 
+
+	
+	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	var derive_adj(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
+
+	
+	
 /*	
 	timeseries integrate(std::string opt);
 	

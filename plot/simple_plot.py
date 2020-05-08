@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-data = np.loadtxt("../data/template_ts_ba298.dat")
+data = np.loadtxt("../data/template_ts_ba9257.dat")
 data = list(zip(*data))
 
 t = np.asarray(data[0])
@@ -15,6 +15,10 @@ J = np.asarray(data[5])
 
 I = np.asarray(data[6])
 
+t = t[len(I)-int(len(I)/10)::]
+G = G[len(I)-int(len(I)/10)::]
+Q = Q[len(I)-int(len(I)/10)::]
+I = I[len(I)-int(len(I)/10)::]
 
 pl.plot(t, I, c='k', linewidth=0.5)
 pl.plot(t, G, c='r', linewidth=0.5)

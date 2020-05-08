@@ -8,6 +8,7 @@
 #include <cmath>
 #include <complex>
 #include <vector>
+#include <random>
 
 #include <algorithm>
 #include <chrono>
@@ -16,6 +17,8 @@
 #include "timer.hpp"
 #include "parameter.hpp"
 #include "variable.hpp"
+#include "timeseries.hpp"
+
 
 #include "integrate.hpp"
 
@@ -70,60 +73,17 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	
 
 
+	
+	integrator IN(AP);	
+	
+ 	timeseries TS(AP);
 
-
-	vector<double> result_Time;	
-	vector<var> result_X;
+	TS = IN.integrate_simple_TS_noise("g");
 	
-	
-	integrator IN(AP);
-	IN.integrate(result_Time, result_X, "27");
-	
-	
-	
-	
-	stringstream paramFileName;
-	paramFileName.precision(7);
-	
-	
-	srand (time(NULL));
-	int batch_no = rand()%10000;
-
-	paramFileName << "data/template_ts_ba" << batch_no <<".dat";
-
-
-	ofstream data;
-	data.open(paramFileName.str().c_str(),ios::trunc);
-
-
-	data << "#t" << '\t';
-	data << "ER" << '\t';
-	data << "EI" << '\t';
-	data << "G" << '\t';
-	data << "Q" << '\t';
-	data << "J" << '\t';
-	data << "I" << '\t';
-	data << endl;
-	
-	
-	
-	for(ulint i = 0; i < result_Time.size(); i++)
-	{
-		data << setprecision(15);
-		data << result_Time[i] << '\t';
-		data << result_X[i].ER << '\t';
-		data << result_X[i].EI << '\t';
-		data << result_X[i].G << '\t';
-		data << result_X[i].Q << '\t';
-		data << result_X[i].J << '\t';
-		data << result_X[i].ER*result_X[i].ER+result_X[i].EI*result_X[i].EI << '\t';
-		data << endl;
-	}
-	
-	data.close();
-         
+	TS.write_file("template_ts_ba");
         
 	time_total.stop();
 	time_total.print_elaps();
