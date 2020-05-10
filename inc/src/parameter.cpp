@@ -175,6 +175,7 @@ ipar_set::ipar_set(string option)
 		this->out_time.par_dbl = 100.0;
 		this->dt.par_dbl = 1e-4;
 		this->sqrtdt.par_dbl = sqrt(1e-4);
+		this->D.par_dbl = 0.0;
 	}
 	else if(option == "def")
 	{
@@ -182,6 +183,16 @@ ipar_set::ipar_set(string option)
 		this->out_time.par_dbl = 50.0;
 		this->dt.par_dbl = 1e-3;
 		this->sqrtdt.par_dbl = sqrt(1e-3);
+		this->D.par_dbl = 0.0;
+	}
+	else if(option == "noise")
+	{
+		this->int_time.par_dbl = 300.0;
+		this->out_time.par_dbl = 100.0;
+		this->dt.par_dbl = 1e-4;
+		this->sqrtdt.par_dbl = sqrt(1e-4);
+		this->D.par_dbl = 0.2;
+		this->rea.par_dbl = 1.0;
 	}
 	else
 	{
@@ -197,6 +208,8 @@ vector<par> ipar_set::collect()
 	collection.push_back(this->out_time);
 	collection.push_back(this->dt);
 	collection.push_back(this->sqrtdt);
+	collection.push_back(this->D);
+
 	
 	return collection;
 }
@@ -282,7 +295,9 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 	this->IP.int_time.par_dbl = cmd.get_dbl(this->IP.int_time.par_str, this->IP.int_time.par_dbl);
 	this->IP.out_time.par_dbl = cmd.get_dbl(this->IP.out_time.par_str, this->IP.out_time.par_dbl);
 	this->IP.dt.par_dbl = cmd.get_dbl(this->IP.dt.par_str, this->IP.dt.par_dbl);
-	this->IP.sqrtdt.par_dbl = sqrt(cmd.get_dbl(this->IP.dt.par_str, sqrt(this->IP.dt.par_dbl)));;
+	this->IP.sqrtdt.par_dbl = sqrt(cmd.get_dbl(this->IP.dt.par_str, sqrt(this->IP.dt.par_dbl)));
+	this->IP.D.par_dbl = cmd.get_dbl(this->IP.D.par_str, this->IP.D.par_dbl);
+	this->IP.rea.par_dbl = cmd.get_dbl(this->IP.rea.par_str, this->IP.rea.par_dbl);
 }
 
 double allpar_set::larger_delay()
@@ -357,6 +372,8 @@ ipar_dbl_set::ipar_dbl_set(ipar_set IP)
 	this->out_time = IP.out_time.par_dbl;
 	this->dt = IP.dt.par_dbl;
 	this->sqrtdt = IP.sqrtdt.par_dbl;
+	this->D = IP.D.par_dbl;
+	this->rea = IP.rea.par_dbl;
 }
 
 ipar_dbl_set::ipar_dbl_set(allpar_set AP)
@@ -365,4 +382,6 @@ ipar_dbl_set::ipar_dbl_set(allpar_set AP)
 	this->out_time = AP.IP.out_time.par_dbl;	
 	this->dt = AP.IP.dt.par_dbl;
 	this->sqrtdt = AP.IP.sqrtdt.par_dbl;
+	this->D = AP.IP.D.par_dbl;
+	this->rea = AP.IP.rea.par_dbl;
 }

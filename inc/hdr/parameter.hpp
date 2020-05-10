@@ -73,6 +73,8 @@ public:
 	par out_time{0.0, "out_time", "t_{\\text{out}}"};
 	par dt{0.0, "dt", "\\mathrm{d}t"};
 	par sqrtdt{sqrt(0.0), "sqrtdt", "\\sqrt{\\mathrm{d}t}"};
+	par D{0.0, "D", "D"};
+	par rea{0.0, "rea", "rea"};
 	
 	ipar_set(std::string option);
 	
@@ -144,6 +146,9 @@ public:
 	double out_time;
 	double dt;
 	double sqrtdt;
+	double D;
+	double rea;
+
   
 	ipar_dbl_set(ipar_set IP);
 	ipar_dbl_set(allpar_set AP);

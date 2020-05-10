@@ -17,8 +17,9 @@
 #include "timer.hpp"
 #include "parameter.hpp"
 #include "variable.hpp"
-#include "timeseries.hpp"
 
+#include "initial_con.hpp"
+#include "timeseries.hpp"
 
 #include "integrate.hpp"
 
@@ -37,54 +38,25 @@ int main(int argc, char* argv[])
 	AP->check_cmd_line(argc, argv);
 
 
-//######################### initial values for history arrays   ###########################
-
-	double icer = 0.4;
-	double icei = 0.0;
-	double icg  = 4.0;
-	double icq  = 1.0;
-	double icj  = 0.0;
-
-
-//############################## reading in of parameter values and flags #########################################
-	
-
-	if(argc > 0) 
-	{
-		for(int i=0; i < argc; i++)
-		{
-			if(string(argv[i]) == string("-icer") && argc>i+1)
-			{
-				icer = atof(argv[i+1]);
-			}
-			if(string(argv[i]) == string("-icei") && argc>i+1)
-			{
-				icei = atof(argv[i+1]);
-			}
-			if(string(argv[i]) == string("-icg") && argc>i+1)
-			{
-				icg = atof(argv[i+1]);
-			}
-			if(string(argv[i]) == string("-icq") && argc>i+1)
-			{
-				icq = atof(argv[i+1]);
-			}
-
-		}
-	}
-
-	
-
-
-	
-	integrator IN(AP);	
-	
+	initial_con IC(AP);
+	integrator IN(AP);
  	timeseries TS(AP);
 
+	IN.initialize(IC);
+/*	
+	IN.integrate_noise();
+
+	
 	TS = IN.integrate_simple_TS_noise("g");
 	
+	
+	initial_con IC2(TS);
+
+	
 	TS.write_file("template_ts_ba");
-        
+
+*/
+	
 	time_total.stop();
 	time_total.print_elaps();
 	

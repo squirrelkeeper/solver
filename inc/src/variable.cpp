@@ -103,4 +103,3 @@ var var::operator=(const varC &C)
 	return R;
 }
 */
-

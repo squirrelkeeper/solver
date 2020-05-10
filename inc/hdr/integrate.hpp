@@ -4,6 +4,8 @@
 #include "../hdr/parameter.hpp"
 #include "../hdr/variable.hpp"
 #include "../hdr/timeseries.hpp"
+#include "../hdr/initial_con.hpp"
+
 
 
 //###########################################
@@ -88,13 +90,16 @@ public:
 	long pos1;
 	long pos2;
 	double Time;
+	int rea;
+	int max_rea;
+	bool noise;
 	
 	integrator(allpar_set*);
 	
-	void integrate(std::vector<double>&, std::vector<var>&, std::string);
-	timeseries integrate_simple_TS(std::string);
-	timeseries integrate_simple_TS_noise(std::string);
-
+	void initialize(initial_con IC);
+	
+	timeseries integrate();
+	timeseries integrate_noise();
 
 	
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
@@ -103,25 +108,6 @@ public:
 	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
 
 	
-	
-/*	
-	timeseries integrate(std::string opt);
-	
-	void initialize(std::vector<varC> &C, std::string opt);
-	void initialize(std::vector<var> &R, std::string opt);
-	void initialize(std::vector<varC> &C, initial_condition ic);
-	void initialize(std::vector<var> &R, initial_condition ic);
-	
-	varC derive_full(varC&, varC&, varC&, lpar_dbl_set*, fpar_dbl_set*);
-	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
-	var derive_adj(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
-	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
-
-
-	
-	double test(double);
-
-*/
 };
 
 #endif
