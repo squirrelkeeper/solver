@@ -16,6 +16,7 @@ public:
 	double I_max;
 	double I_min;
 	double I_mid;
+	double I_mean;
 	
 	allpar_set *AP;
 	double seed;
@@ -25,6 +26,8 @@ public:
 	timeseries(double, allpar_set*);
 	
 	std::vector<double> pulse_positions();
+	std::vector<double> pulse_positions2();
+
 	
 	void write_file(std::string);
 };

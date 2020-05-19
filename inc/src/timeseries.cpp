@@ -7,6 +7,10 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <numeric>
+#include <iomanip>
+
+
 
 
 #include "../hdr/timeseries.hpp"
@@ -96,14 +100,133 @@ void timeseries::write_file(string file_name)
 vector<double> timeseries::pulse_positions()
 {
 	vector<double> pp_out;
+		
+	auto max_iterator = max_element(I.begin(), I.end());
+	I_max = I[distance(I.begin(), max_iterator)];
 	
-	auto it = max_element(I.begin(), I.end());
+	auto min_iterator = min_element(I.begin(), I.end());
+	I_min = I[distance(I.begin(), min_iterator)];
+	
+	I_mid = (I_max - I_min)*0.5;
+	
+	I_mean = accumulate(I.begin(), I.end(), (double)(0.0));
+	I_mean/= (double)(len);
+
+	double thres_front = (I_mid - I_mean)*0.5;
+	double thres_tail = (I_mid - I_mean)*0.25;
+	
+	double sqrtD = sqrt(AP->IP.D.par_dbl);
+	bool pulse_detected = false;
+	int pulse_counter = 0;	
+	
+	vector<long> pulse_left_index;
+	vector<long> pulse_right_index;
+	
+	double front_t;
+	double tail_t;
+	
+	
+	
+	for(long i = 0; i < len; i++)
+	{
+		if(I[i] > thres_front && pulse_detected==false)
+		{
+			pulse_detected = true;
+			pulse_left_index.push_back(i);
+			front_t = t[i];
+			cout << t[i] << '\t';
+		}
+		if(I[i] < thres_tail && pulse_detected==true)
+		{
+			pulse_counter++;
+			pulse_detected = false;
+			pulse_right_index.push_back(i);
+			tail_t = t[i];
+			cout << t[i] << '\t';
+			cout << tail_t-front_t << endl;
+		}
+	}
+	
+	cout << pulse_counter << endl;
+	
+	cout << I_max << '\t';
+	cout << I_min << '\t';
+	cout << I_mid << '\t';
+	cout << I_mean << endl;
+	
 
 		
-	cout << I[distance(I.begin(), it)] << endl;
+
 	
 	return pp_out;
 }
+
+
+
+vector<double> timeseries::pulse_positions2()
+{
+	vector<double> pp_out;
+		
+	auto max_iterator = max_element(I.begin(), I.end());
+	I_max = I[distance(I.begin(), max_iterator)];
+	
+	auto min_iterator = min_element(I.begin(), I.end());
+	I_min = I[distance(I.begin(), min_iterator)];
+	
+	I_mid = (I_max - I_min)*0.5;
+	
+	I_mean = accumulate(I.begin(), I.end(), (double)(0.0));
+	I_mean/= (double)(len);
+
+	double thres_front = (I_mid - I_mean)*0.5;
+	double thres_tail = (I_mid - I_mean)*0.25;
+	
+	double sqrtD = sqrt(AP->IP.D.par_dbl);
+	bool pulse_detected = false;
+	int pulse_counter = 0;	
+	
+	vector<long> pulse_left_index;
+	vector<long> pulse_right_index;
+	
+	double front_t;
+	double tail_t;
+	
+	
+	
+	for(long i = 0; i < len; i++)
+	{
+		if(I[i] > thres_front && pulse_detected==false)
+		{
+			pulse_detected = true;
+			pulse_left_index.push_back(i);
+			front_t = t[i];
+			cout << t[i] << '\t';
+		}
+		if(I[i] < thres_tail && pulse_detected==true)
+		{
+			pulse_counter++;
+			pulse_detected = false;
+			pulse_right_index.push_back(i);
+			tail_t = t[i];
+			cout << t[i] << '\t';
+			cout << tail_t-front_t << endl;
+		}
+	}
+	
+	cout << pulse_counter << endl;
+	
+	cout << I_max << '\t';
+	cout << I_min << '\t';
+	cout << I_mid << '\t';
+	cout << I_mean << endl;
+	
+
+		
+
+	
+	return pp_out;
+}
+
 
 
 

@@ -38,24 +38,25 @@ int main(int argc, char* argv[])
 	AP->check_cmd_line(argc, argv);
 
 
-	initial_con IC(AP);
+	var X_IC;
+	X_IC.ER = 0.4;
+	X_IC.EI = 0.0;
+	X_IC.G = 4.0;
+	X_IC.Q = 1.0;
+	X_IC.J = 0.4;
+	
+	initial_con IC("const", X_IC, AP);
 	integrator IN(AP);
  	timeseries TS(AP);
 
 	IN.initialize(IC);
-/*	
-	IN.integrate_noise();
-
 	
-	TS = IN.integrate_simple_TS_noise("g");
+	TS = IN.integrate_noise();
 	
-	
-	initial_con IC2(TS);
-
+	TS.pulse_positions();
 	
 	TS.write_file("template_ts_ba");
 
-*/
 	
 	time_total.stop();
 	time_total.print_elaps();
