@@ -53,9 +53,11 @@ int main(int argc, char* argv[])
 	
 	TS = IN.integrate_noise();
 	
-	TS.pulse_positions();
+	auto pulse_list = TS.pulse_analysis();
 	
-	TS.write_file("template_ts_ba");
+	TS.cout_pulse_data(pulse_list);
+	
+	TS.write_file("test_ts");
 
 	
 	time_total.stop();

@@ -17,6 +17,28 @@
 
 using namespace std;
 
+pulse::pulse()
+{
+	thres_pos = 0;
+	right_pos = 0;
+	left_pos = 0;
+	baseline = 0;
+	max = 0;
+	pos = 0;
+}
+
+void pulse::reset()
+{
+	thres_pos = 0;
+	right_pos = 0;
+	left_pos = 0;
+	baseline = 0;
+	max = 0;
+	pos = 0;
+}
+
+//###########################################
+
 timeseries::timeseries()
 {
 }
@@ -58,8 +80,11 @@ void timeseries::write_file(string file_name)
 
 	full_name << "data/";
 	full_name << file_name;
-	full_name << batch_no;
-	full_name << ".dat";
+	full_name << "_D";
+	full_name << AP->IP.D.par_dbl;
+//	full_name << "_ba";
+//	full_name << batch_no;
+	full_name << ".ts.dat";
 
 
 	ofstream data;
@@ -97,140 +122,141 @@ void timeseries::write_file(string file_name)
 
 
 
-vector<double> timeseries::pulse_positions()
-{
-	vector<double> pp_out;
-		
-	auto max_iterator = max_element(I.begin(), I.end());
-	I_max = I[distance(I.begin(), max_iterator)];
-	
-	auto min_iterator = min_element(I.begin(), I.end());
-	I_min = I[distance(I.begin(), min_iterator)];
-	
-	I_mid = (I_max - I_min)*0.5;
-	
-	I_mean = accumulate(I.begin(), I.end(), (double)(0.0));
-	I_mean/= (double)(len);
 
-	double thres_front = (I_mid - I_mean)*0.5;
-	double thres_tail = (I_mid - I_mean)*0.25;
+vector<pulse> timeseries::pulse_analysis()
+{
+	vector<pulse> pulse_list;
 	
-	double sqrtD = sqrt(AP->IP.D.par_dbl);
+	auto max_it = max_element(I.begin(), I.end());
+	I_max = I[distance(I.begin(), max_it)];
+
+	double thres = 0.75 * AP->IP.D.par_dbl * I_max;
 	bool pulse_detected = false;
-	int pulse_counter = 0;	
+	long unit = ceil(AP->LP.T.par_dbl/(1000.0*AP->IP.dt.par_dbl));
+	long whs = 5*unit;
 	
-	vector<long> pulse_left_index;
-	vector<long> pulse_right_index;
+	double Iw_mean = 0.0;
+
+	pulse curr_pulse;
 	
-	double front_t;
-	double tail_t;
-	
-	
-	
-	for(long i = 0; i < len; i++)
+	for(long i = whs; i < len - whs; i++)
 	{
-		if(I[i] > thres_front && pulse_detected==false)
+		
+		for(unsigned int j = i - whs; j < i + whs; j++)
+		{
+			Iw_mean += I[j];
+		}
+		
+		Iw_mean /= (double)(2*whs);
+		
+		
+		if(Iw_mean >= thres && pulse_detected==false && i - 6 * unit > 0)
 		{
 			pulse_detected = true;
-			pulse_left_index.push_back(i);
-			front_t = t[i];
-			cout << t[i] << '\t';
+			
+//			cout << "pulse detected at: " << t[i] << " / " << i << endl;
+			
+			curr_pulse.thres_pos = i;
+			
+
+			for(int j = i - 6 * unit; j < i - 2*unit; j++)
+			{
+				//alert if j_start < 0
+				curr_pulse.baseline += I[j];
+			}
+			
+			curr_pulse.baseline /= (double)(4*unit);
 		}
-		if(I[i] < thres_tail && pulse_detected==true)
+		else if(Iw_mean >= thres && pulse_detected==false && i - 6 * unit < 0)
 		{
-			pulse_counter++;
-			pulse_detected = false;
-			pulse_right_index.push_back(i);
-			tail_t = t[i];
-			cout << t[i] << '\t';
-			cout << tail_t-front_t << endl;
+			i += 1000*unit;
 		}
+		
+		if(Iw_mean <= curr_pulse.baseline && pulse_detected==true)
+		{
+			curr_pulse.right_pos = i;
+			
+			
+			long j = curr_pulse.thres_pos;
+			while(j >= 0)
+			{
+				if(j == 0)
+				{
+					pulse_detected = false;
+					curr_pulse.reset();
+					i += 1000*unit;
+					break;
+				}
+				else if(I[j] <= curr_pulse.baseline)
+				{
+					curr_pulse.left_pos = j;
+					break;
+				}
+				
+				j--;
+			}
+			
+			double I_pulse_sum = 0.0;
+			
+			for(long j = curr_pulse.left_pos; j < curr_pulse.right_pos; j++)
+			{
+				if(I[j] > curr_pulse.max)
+				{
+					curr_pulse.max = I[j];
+				}
+				
+				I_pulse_sum += I[j];
+				curr_pulse.pos += I[j] * t[i];
+			}
+			
+			curr_pulse.pos /= I_pulse_sum;
+			
+			pulse_list.push_back(curr_pulse);
+			
+			i = curr_pulse.left_pos;
+
+			curr_pulse.reset();
+			pulse_detected = false;
+			cout << "done" << endl;
+		}
+		
+		if(i > 7000) break;
+		
 	}
 	
-	cout << pulse_counter << endl;
-	
-	cout << I_max << '\t';
-	cout << I_min << '\t';
-	cout << I_mid << '\t';
-	cout << I_mean << endl;
-	
 
-		
-
-	
-	return pp_out;
+	return pulse_list;
 }
 
 
-
-vector<double> timeseries::pulse_positions2()
+void timeseries::cout_pulse_data(vector<pulse> pulse_list)
 {
-	vector<double> pp_out;
-		
-	auto max_iterator = max_element(I.begin(), I.end());
-	I_max = I[distance(I.begin(), max_iterator)];
+	cout << "counted: " << pulse_list.size() << endl;
 	
-	auto min_iterator = min_element(I.begin(), I.end());
-	I_min = I[distance(I.begin(), min_iterator)];
+	cout << "thres_pos" << '\t';
+	cout << "right_pos" << '\t';
+	cout << "left_pos" << '\t';
+	cout << "baseline" << '\t';
+	cout << "max" << '\t';
+	cout << "pos" << '\t';
+	cout << endl;
 	
-	I_mid = (I_max - I_min)*0.5;
-	
-	I_mean = accumulate(I.begin(), I.end(), (double)(0.0));
-	I_mean/= (double)(len);
-
-	double thres_front = (I_mid - I_mean)*0.5;
-	double thres_tail = (I_mid - I_mean)*0.25;
-	
-	double sqrtD = sqrt(AP->IP.D.par_dbl);
-	bool pulse_detected = false;
-	int pulse_counter = 0;	
-	
-	vector<long> pulse_left_index;
-	vector<long> pulse_right_index;
-	
-	double front_t;
-	double tail_t;
-	
-	
-	
-	for(long i = 0; i < len; i++)
+	for(unsigned int i = 0; i < pulse_list.size(); i++)
 	{
-		if(I[i] > thres_front && pulse_detected==false)
-		{
-			pulse_detected = true;
-			pulse_left_index.push_back(i);
-			front_t = t[i];
-			cout << t[i] << '\t';
-		}
-		if(I[i] < thres_tail && pulse_detected==true)
-		{
-			pulse_counter++;
-			pulse_detected = false;
-			pulse_right_index.push_back(i);
-			tail_t = t[i];
-			cout << t[i] << '\t';
-			cout << tail_t-front_t << endl;
-		}
+		cout << pulse_list[i].thres_pos << '\t';
+		cout << pulse_list[i].right_pos << '\t';
+		cout << pulse_list[i].left_pos << '\t';
+		cout << pulse_list[i].baseline << '\t';
+		cout << pulse_list[i].max << '\t';
+		cout << pulse_list[i].pos << '\t';
+		cout << endl;
 	}
-	
-	cout << pulse_counter << endl;
-	
-	cout << I_max << '\t';
-	cout << I_min << '\t';
-	cout << I_mid << '\t';
-	cout << I_mean << endl;
-	
-
-		
-
-	
-	return pp_out;
 }
-
 
 
 
 /*
+
 for(unsigned int i=1; i<res_tt.size();i++)
 {
     if(res_Eabs[i-1]<res_Eabs[i]&&res_Eabs[i+1]<res_Eabs[i])
