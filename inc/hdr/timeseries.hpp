@@ -7,13 +7,16 @@
 class pulse
 {
 public:
-	long thres_pos;
+	long trig_pos;
 	long right_pos;
 	long left_pos;
+	
 	double baseline;
 	double max;
 	double pos;
-
+	double width;
+	
+	bool del;
 	
 	pulse();
 	void reset();
@@ -42,7 +45,7 @@ public:
 	timeseries(double, allpar_set*);
 	
 	std::vector<pulse> pulse_analysis();
-	
+	std::vector<double> get_pulse_dist(std::vector<pulse>);
 	void cout_pulse_data(std::vector<pulse>);
 
 	

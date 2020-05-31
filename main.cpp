@@ -22,6 +22,8 @@
 #include "timeseries.hpp"
 
 #include "integrate.hpp"
+#include "sweep.hpp"
+
 
 typedef unsigned int uint;
 typedef unsigned long int ulint;
@@ -53,11 +55,13 @@ int main(int argc, char* argv[])
 	
 	TS = IN.integrate_noise();
 	
-	auto pulse_list = TS.pulse_analysis();
+	vector<pulse> pulse_list = TS.pulse_analysis();
 	
 	TS.cout_pulse_data(pulse_list);
 	
-	TS.write_file("test_ts");
+	vector<double> pulse_dist = TS.get_pulse_dist(pulse_list);
+	
+//	TS.write_file("test_ts");
 
 	
 	time_total.stop();

@@ -19,22 +19,26 @@ using namespace std;
 
 pulse::pulse()
 {
-	thres_pos = 0;
+	trig_pos = 0;
 	right_pos = 0;
 	left_pos = 0;
 	baseline = 0;
 	max = 0;
 	pos = 0;
+	width = 0;
+	del = false;
 }
 
 void pulse::reset()
 {
-	thres_pos = 0;
+	trig_pos = 0;
 	right_pos = 0;
 	left_pos = 0;
 	baseline = 0;
 	max = 0;
 	pos = 0;
+	width = 0;
+	del = false;
 }
 
 //###########################################
@@ -131,17 +135,33 @@ vector<pulse> timeseries::pulse_analysis()
 	I_max = I[distance(I.begin(), max_it)];
 
 	double thres = 0.75 * AP->IP.D.par_dbl * I_max;
+	
+	double thres_left = 0.75 * AP->IP.D.par_dbl * I_max;
+	double thres_right = 0.75 * AP->IP.D.par_dbl * I_max;
+	
 	bool pulse_detected = false;
 	long unit = ceil(AP->LP.T.par_dbl/(1000.0*AP->IP.dt.par_dbl));
 	long whs = 5*unit;
 	
+	long baseline_gap = 2 * unit;
+	long baseline_interval = 4 * unit;
+	long baseline_space = baseline_interval + baseline_gap;
+	
 	double Iw_mean = 0.0;
+	
+	bool skip_pulse = false;
 
 	pulse curr_pulse;
 	
+	cout << I_max << endl;
+	cout << unit << endl;
+	cout << whs << endl;
+	cout << thres << endl;
+
 	for(long i = whs; i < len - whs; i++)
 	{
-		
+	
+		//sliding window average
 		for(unsigned int j = i - whs; j < i + whs; j++)
 		{
 			Iw_mean += I[j];
@@ -149,81 +169,129 @@ vector<pulse> timeseries::pulse_analysis()
 		
 		Iw_mean /= (double)(2*whs);
 		
-		
-		if(Iw_mean >= thres && pulse_detected==false && i - 6 * unit > 0)
+		//trigger event
+		if(Iw_mean >= thres && pulse_detected==false && i - baseline_space > 0)
 		{
+//			cout << "trigger at: " << t[i] << " / " << i << endl;
 			pulse_detected = true;
-			
-//			cout << "pulse detected at: " << t[i] << " / " << i << endl;
-			
-			curr_pulse.thres_pos = i;
+			curr_pulse.trig_pos = i;
 			
 
-			for(int j = i - 6 * unit; j < i - 2*unit; j++)
+			for(int j = i - baseline_space; j < i - baseline_gap; j++)
 			{
 				//alert if j_start < 0
 				curr_pulse.baseline += I[j];
 			}
 			
-			curr_pulse.baseline /= (double)(4*unit);
-		}
-		else if(Iw_mean >= thres && pulse_detected==false && i - 6 * unit < 0)
-		{
-			i += 1000*unit;
+			curr_pulse.baseline /= (double)(baseline_interval);
 		}
 		
+		//find right edge and expand left edge
 		if(Iw_mean <= curr_pulse.baseline && pulse_detected==true)
 		{
 			curr_pulse.right_pos = i;
 			
-			
-			long j = curr_pulse.thres_pos;
-			while(j >= 0)
+			long k = curr_pulse.trig_pos;
+			while(k >= 0)
 			{
-				if(j == 0)
+				if(k == 0)
 				{
-					pulse_detected = false;
-					curr_pulse.reset();
-					i += 1000*unit;
+					skip_pulse = true;
 					break;
 				}
-				else if(I[j] <= curr_pulse.baseline)
+				else if(I[k] <= curr_pulse.baseline)
 				{
-					curr_pulse.left_pos = j;
+					curr_pulse.left_pos = k;
 					break;
 				}
 				
-				j--;
+				k--;
 			}
 			
-			double I_pulse_sum = 0.0;
-			
-			for(long j = curr_pulse.left_pos; j < curr_pulse.right_pos; j++)
+			if(skip_pulse == false)
 			{
-				if(I[j] > curr_pulse.max)
-				{
-					curr_pulse.max = I[j];
-				}
-				
-				I_pulse_sum += I[j];
-				curr_pulse.pos += I[j] * t[i];
-			}
-			
-			curr_pulse.pos /= I_pulse_sum;
-			
-			pulse_list.push_back(curr_pulse);
-			
-			i = curr_pulse.left_pos;
+				curr_pulse.width = t[curr_pulse.right_pos]-t[curr_pulse.left_pos];
 
-			curr_pulse.reset();
-			pulse_detected = false;
-			cout << "done" << endl;
+				double I_pulse_sum = 0.0;
+				
+				for(long l = curr_pulse.left_pos; l < curr_pulse.right_pos; l++)
+				{
+					if(I[l] > curr_pulse.max)
+					{
+						curr_pulse.max = I[l];
+					}
+					
+					I_pulse_sum += I[l];
+					curr_pulse.pos += I[l] * t[l];
+				}
+				
+				curr_pulse.pos /= I_pulse_sum;
+				
+				pulse_list.push_back(curr_pulse);
+				curr_pulse.reset();
+				
+				
+
+				pulse_detected = false;
+			}
+			else
+			{
+				i = curr_pulse.right_pos;
+				curr_pulse.reset();
+				pulse_detected = false;
+			}
 		}
 		
-		if(i > 7000) break;
 		
 	}
 	
+	//erase all nan valued pulses -- this doesnt work
+	for(unsigned int i = 0; i < pulse_list.size(); i++)
+	{
+		if(isnan(pulse_list[i].pos))
+		{
+			pulse_list.erase(pulse_list.begin()+i);
+		}
+	}
+	
+	
+	
+	//scan for small pulse distances -- but what is small?
+	if(pulse_list.size() > 1)
+	{
+		double dist_mean = 0.0;
+		for(unsigned int i = 1; i < pulse_list.size(); i++)
+		{
+			dist_mean += pulse_list[i].pos - pulse_list[i-1].pos;
+			cout << pulse_list[i].pos << endl;
+//			cout << dist_mean << endl;
+		}
+		cout << (double)(pulse_list.size()-1) << endl;
+		dist_mean /= (double)(pulse_list.size()-1);
+		
+		cout << dist_mean << endl;
+
+		
+		for(unsigned int i = 1; i < pulse_list.size(); i++)
+		{
+			double dist = pulse_list[i].pos - pulse_list[i-1].pos;
+			if(dist < 0.9 * dist_mean)
+			{
+				cout << "small" << endl;
+				int index = pulse_list[i].max < pulse_list[i-1].max ? i : i-1;
+				cout << pulse_list[index].pos << endl;
+			}
+		}
+	}
+	
+	//erase all marked pulses
+	for(unsigned int i = 0; i < pulse_list.size(); i++)
+	{
+		if(pulse_list[i].del)
+		{
+			pulse_list.erase(pulse_list.begin()+i);
+		}
+	}
 
 	return pulse_list;
 }
@@ -231,134 +299,53 @@ vector<pulse> timeseries::pulse_analysis()
 
 void timeseries::cout_pulse_data(vector<pulse> pulse_list)
 {
+
 	cout << "counted: " << pulse_list.size() << endl;
-	
-	cout << "thres_pos" << '\t';
+
+	cout << "trig_pos" << '\t';
 	cout << "right_pos" << '\t';
 	cout << "left_pos" << '\t';
 	cout << "baseline" << '\t';
 	cout << "max" << '\t';
 	cout << "pos" << '\t';
+	cout << "width" << '\t';
+	cout << "del" << '\t';
 	cout << endl;
-	
+
+
 	for(unsigned int i = 0; i < pulse_list.size(); i++)
 	{
-		cout << pulse_list[i].thres_pos << '\t';
+		cout << pulse_list[i].trig_pos << '\t';
 		cout << pulse_list[i].right_pos << '\t';
 		cout << pulse_list[i].left_pos << '\t';
 		cout << pulse_list[i].baseline << '\t';
 		cout << pulse_list[i].max << '\t';
 		cout << pulse_list[i].pos << '\t';
+		cout << pulse_list[i].width << '\t';
+		cout << pulse_list[i].del << '\t';
 		cout << endl;
 	}
 }
 
-
-
-/*
-
-for(unsigned int i=1; i<res_tt.size();i++)
+vector<double> timeseries::get_pulse_dist(vector<pulse> pulse_list)
 {
-    if(res_Eabs[i-1]<res_Eabs[i]&&res_Eabs[i+1]<res_Eabs[i])
-    {
-        vector<double> temp;
-        temp.push_back(res_tt[i]);
-        temp.push_back(res_Eabs[i]);
-        res_maxima.push_back(temp);
-    }
-}
-
-for(unsigned int i=0; i<=res_Eabs.size();i++)
-{
-    if(i==0)
-    {
-        absolute_max = res_Eabs[0];
-        absolute_min = res_Eabs[0];
-        absolute_mean = res_Eabs[0];
-    }
-    if(absolute_max < res_Eabs[i]) absolute_max = res_Eabs[i];
-    if(absolute_min > res_Eabs[i]) absolute_min = res_Eabs[i];
-    absolute_mean += res_Eabs[i];
-    if(i==res_Eabs.size()) absolute_mean/=i;
-}
-
-
-for(unsigned int i=0; i<res_tt.size();i++)
-{
-    if(res_Eabs[i]>0.1*absolute_max+Lpara->D*1.1 && pulse_detected==false)
-    {
-        pulse_detected = true;
-        pulse_left_index.push_back(i);
-    }
-    if(res_Eabs[i]<0.1*absolute_max && pulse_detected==true)
-    {
-        pulse_counter++;
-        pulse_detected = false;
-        pulse_right_index.push_back(i);
-    }
-}
-
-
-if(pulse_counter != 0)
-
-{    
-
-if(pulse_left_index.size()!=pulse_right_index.size())
-{
-    pulse_left_index.pop_back();
-}
-
-for(unsigned int i=0;i<pulse_left_index.size();i++)
-{
-	if(pulse_left_index[i] != 0)
+	vector<double> pulse_dist;
+	
+	for(unsigned i = 1; i < pulse_list.size(); i++)
 	{
-		for(unsigned int j=pulse_left_index[i];res_Eabs[j]>=res_Eabs[pulse_right_index[i]];j--)
-		{
-			if(pulse_left_index[i] == 0)
-			{
-				break;
-			}
-		}
+		pulse_dist.push_back(pulse_list[i].pos - pulse_list[i-1].pos);
 	}
+	
+	return pulse_dist;
 }
 
 
 
-for(unsigned int i=0;i<pulse_left_index.size();i++)
-{
-    double weighted_amp_sum = 0;
-    double amp_sum = 0;
-    for(unsigned int j=pulse_left_index[i]; j<pulse_right_index[i]; j++)
-    {
-        weighted_amp_sum += res_Eabs[j] * res_tt[j];
-        amp_sum += res_Eabs[j];
-    }
-    pulse_postions.push_back(weighted_amp_sum/amp_sum);
-
-    out_pulse_postions.push_back(Lpara->Jg);
-    out_pulse_postions.push_back(Lpara->gg);
-
-    out_pulse_postions.push_back(Lpara->gq);
-    out_pulse_postions.push_back(Lpara->q0);
-    out_pulse_postions.push_back(FBpara->K);
-    out_pulse_postions.push_back(FBpara->tau);
-    out_pulse_postions.push_back(FBpara->tauLP);
-    out_pulse_postions.push_back(r);
-    out_pulse_postions.push_back(weighted_amp_sum/amp_sum);
-
-}
-
-for(unsigned int i=0;i<pulse_postions.size()-1;i++)
-{
-    t_isi.push_back(pulse_postions[i+1]-pulse_postions[i]);
-//    cout << "Ppos" << '\t' << pulse_postions[i] << endl;
-//    cout << "Ppos+1" << '\t' << pulse_postions[i+1] << endl;
-//    cout << "t_isi[i]" << '\t' << t_isi[i] << endl;
-}
 
 
 
-*/
+
+
 
 
 
