@@ -7,6 +7,17 @@
 #include "../hdr/initial_con.hpp"
 #include "../hdr/integrate.hpp"
 
+class sweep
+{
+public:
+	par *ptr_sweep_par1;
+	par *ptr_sweep_par2;
+	
+	allpar_set AP;
+	initial_con IC;
+	integrator IN;
+	timeseries TS;
+};
 
 
 

@@ -25,8 +25,6 @@
 #include "sweep.hpp"
 
 
-typedef unsigned int uint;
-typedef unsigned long int ulint;
 
 using namespace std;
 
