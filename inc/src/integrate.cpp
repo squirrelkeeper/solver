@@ -270,6 +270,199 @@ timeseries integrator::integrate_noise()
 
 
 
+
+timeseries integrator::integrate_ret(timeseries hom)
+{
+	timeseries TS(AP);
+// 	
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+	
+	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+
+	double tau1 = AP->smaller_delay();
+	double tau2 = AP->larger_delay();
+	
+	long hpos0 = (long)(hom.X.size()*0.5);
+	long hpos1 = hpos0 - (long)(floor(tau1 / ip->dt));
+	long hpos2 = hpos0 - (long)(floor(tau2 / ip->dt)+1);
+	
+
+	for(long i=0; i < it-TS.len; i++)
+	{
+		
+		dX = derive_ret(
+			hom.X[hpos0], hom.X[hpos1], hom.X[hpos2],
+			X[pos0], X[pos1], X[pos2],
+			lp, fp
+		);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER,
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		hpos0++;
+		hpos1++;
+		hpos2++;
+	}
+	
+	for(long i=0; i < TS.len; i++)
+	{
+		
+		dX = derive_ret(
+			hom.X[hpos0], hom.X[hpos1], hom.X[hpos2],
+			X[pos0], X[pos1], X[pos2],
+			lp, fp
+		);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		hpos0++;
+		hpos1++;
+		hpos2++;
+	
+		TS.X[i] = Xnew;
+		TS.t[i] = Time;
+		TS.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+	}
+
+	
+	return TS;
+}
+
+
+timeseries integrator::integrate_adj(timeseries hom)
+{
+	timeseries TS(AP);
+// 	
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+	
+	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+
+	double tau1 = AP->smaller_delay();
+	double tau2 = AP->larger_delay();
+	
+	long hpos0 = (long)(hom.X.size()*0.5);
+	long hpos1 = hpos0 - (long)(floor(tau1 / ip->dt));
+	long hpos2 = hpos0 - (long)(floor(tau2 / ip->dt)+1);
+	
+
+	for(long i=0; i < it-TS.len; i++)
+	{
+		
+		dX = derive_adj(
+			hom.X[hpos0], hom.X[hpos1], hom.X[hpos2],
+			X[pos0], X[pos1], X[pos2],
+			lp, fp
+		);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER,
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		hpos0++;
+		hpos1++;
+		hpos2++;
+	}
+	
+	for(long i=0; i < TS.len; i++)
+	{
+		
+		dX = derive_ret(
+			hom.X[hpos0], hom.X[hpos1], hom.X[hpos2],
+			X[pos0], X[pos1], X[pos2],
+			lp, fp
+		);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		hpos0++;
+		hpos1++;
+		hpos2++;
+	
+		TS.X[i] = Xnew;
+		TS.t[i] = Time;
+		TS.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+	}
+
+	
+	return TS;
+}
+
+
+
+
+
+
+
+
+
+
 /*REPLACE START*/
 
 var integrator::derive_real(var &X, var &XT, var &Xtau, lpar_dbl_set *l, fpar_dbl_set *f)
