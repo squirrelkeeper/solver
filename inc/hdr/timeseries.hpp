@@ -47,7 +47,11 @@ public:
 	std::vector<pulse> pulse_analysis();
 	std::vector<double> get_pulse_dist(std::vector<pulse>);
 	void cout_pulse_data(std::vector<pulse>);
-
+	
+	void cut_series(std::string, double);
+	void reverse_series();
+	void cc_series();
+	void reset_time();
 	
 	void write_file(std::string);
 };

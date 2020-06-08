@@ -51,15 +51,23 @@ int main(int argc, char* argv[])
 
 	IN.initialize(IC);
 	
-	TS = IN.integrate_noise();
+	TS = IN.integrate();
 	
-	vector<pulse> pulse_list = TS.pulse_analysis();
+	TS.cut_series("last", 10);
+	TS.reverse_series();
+	TS.cc_series();
+	TS.reset_time();
 	
-	TS.cout_pulse_data(pulse_list);
 	
-	vector<double> pulse_dist = TS.get_pulse_dist(pulse_list);
+//	vector<pulse> pulse_list = TS.pulse_analysis();
 	
-//	TS.write_file("test_ts");
+//	TS.cout_pulse_data(pulse_list);
+	
+//	vector<double> pulse_dist = TS.get_pulse_dist(pulse_list);
+	
+	
+	
+	TS.write_file("test_ts");
 
 	
 	time_total.stop();

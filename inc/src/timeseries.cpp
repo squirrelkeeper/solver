@@ -52,7 +52,7 @@ timeseries::timeseries(allpar_set *init_AP)
 	AP = init_AP;
 	ipar_dbl_set ip(*AP);
 
-	len_dbl = ip.out_time;	
+	len_dbl = ip.out_time;
 	len = len_dbl/ip.dt;
 
 	t.resize(len);
@@ -62,10 +62,10 @@ timeseries::timeseries(allpar_set *init_AP)
 
 timeseries::timeseries(double init_len, allpar_set *init_AP)
 {
-	*AP = *init_AP;
+	AP = init_AP;
 	ipar_dbl_set ip(*AP);
 
-	len_dbl = init_len;	
+	len_dbl = init_len;
 	len = len_dbl/ip.dt;
 	
 	t.resize(len);
@@ -343,7 +343,74 @@ vector<double> timeseries::get_pulse_dist(vector<pulse> pulse_list)
 
 
 
+void timeseries::cut_series(string opt, double time_interval)
+{
+	long new_len = time_interval/AP->IP.dt.par_dbl;
 
+	vector<double> new_t(new_len);
+	vector<double> new_I(new_len);
+	vector<var> new_X(new_len);
+	
+	long start;
+	
+	if(opt=="last")
+	{
+		start = len - new_len;
+	}
+	else if(opt=="first")
+	{
+		start = 0;
+	}
+	
+	for(long i = 0; i < new_len; i++)
+	{
+		new_t[i] = t[i+start]; 
+		new_I[i] = I[i+start];
+		new_X[i] = X[i+start];
+	}
+	
+	len = new_len;
+	len_dbl = time_interval;
+	t = new_t;
+	I = new_I;
+	X = new_X;
+}
+
+void timeseries::reverse_series()
+{
+	vector<double> new_t(len);
+	vector<double> new_I(len);
+	vector<var> new_X(len);
+	
+	for(long i = 0; i < len; i++)
+	{
+		new_t[i] = t[len-1 - i]; 
+		new_I[i] = I[len-1 - i];
+		new_X[i] = X[len-1 - i];
+	}
+	
+	t = new_t;
+	I = new_I;
+	X = new_X;
+}
+
+void timeseries::cc_series()
+{
+	for(long i = 0; i < len; i++)
+	{
+		X[i].EI = -X[i].EI;
+	}
+}
+
+void timeseries::reset_time()
+{
+	double dt = AP->IP.dt.par_dbl;
+	
+	for(long i = 0; i < len; i++)
+	{
+		t[i] = (double)(i) * dt;
+	}
+}
 
 
 

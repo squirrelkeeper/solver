@@ -114,7 +114,7 @@ void integrator::initialize(initial_con IC)
 	}	
 }
 
-	
+
 timeseries integrator::integrate()
 {
 	timeseries TS(AP);
@@ -410,9 +410,9 @@ timeseries integrator::integrate_adj(timeseries hom)
 		pos2 = (pos2+1) % dim2;
 		pos1 = (pos1+1) % dim2;
 		
-		hpos0++;
-		hpos1++;
-		hpos2++;
+		hpos0--;
+		hpos1--;
+		hpos2--;
 	}
 	
 	for(long i=0; i < TS.len; i++)

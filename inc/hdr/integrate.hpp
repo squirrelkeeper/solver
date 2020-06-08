@@ -102,6 +102,8 @@ public:
 	timeseries integrate_noise();
 
 	timeseries integrate_ret(timeseries);
+	timeseries integrate_adj(timeseries);
+
 	
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
