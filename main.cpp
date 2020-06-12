@@ -37,27 +37,98 @@ int main(int argc, char* argv[])
 	allpar_set *AP = new allpar_set("JAU15", "TAU1", "quick");
 	AP->check_cmd_line(argc, argv);
 
-
+	
 	var X_IC;
 	X_IC.ER = 0.4;
 	X_IC.EI = 0.0;
 	X_IC.G = 4.0;
 	X_IC.Q = 1.0;
 	X_IC.J = 0.4;
+	initial_con hom_IC("const", X_IC, AP);
 	
-	initial_con IC("const", X_IC, AP);
-	integrator IN(AP);
- 	timeseries TS(AP);
 
-	IN.initialize(IC);
+	var Y_IC;
+	Y_IC.ER = 2.0;
+	Y_IC.EI = 0.0;
+	Y_IC.G = 1.0;
+	Y_IC.Q = 1.0;
+	Y_IC.J = 0.0;
+	initial_con ret_IC("const", Y_IC, AP);
+
 	
-	TS = IN.integrate();
+	var Z_IC;
+	Z_IC.ER = 0.0;
+	Z_IC.EI = 1.0;
+	Z_IC.G = 0.0;
+	Z_IC.Q = 0.0;
+	Z_IC.J = 0.0;
+	initial_con adj_IC("const", Z_IC, AP);
 	
-	TS.cut_series("last", 10);
-	TS.reverse_series();
-	TS.cc_series();
-	TS.reset_time();
 	
+	AP->IP.int_time.par_dbl = 1000;
+	AP->IP.out_time.par_dbl = 400;
+	integrator hom_IN(AP);
+	timeseries hom_TS(AP);
+	hom_IN.initialize(hom_IC);
+	hom_TS = hom_IN.integrate();
+
+	AP->IP.int_time.par_dbl = 200;
+	AP->IP.out_time.par_dbl = 50;
+
+	integrator ret_IN(AP);
+	timeseries ret_TS(AP);
+	ret_IN.initialize(ret_IC);
+	ret_TS = ret_IN.integrate_ret(hom_TS);
+
+	integrator adj_IN(AP);
+	timeseries adj_TS(AP);
+	adj_IN.initialize(adj_IC);
+	adj_TS = adj_IN.integrate_adj(hom_TS);
+
+
+	adj_TS.cut_series("last", 10);
+	adj_TS.reverse_series();
+	adj_TS.cc_series();
+	adj_TS.reset_time();
+	
+	ret_TS.cut_series("last", 10);
+	ret_TS.reset_time();
+	
+	hom_TS.cut_series("last", 10);
+	hom_TS.reset_time();
+	
+	
+	adj_IN.pos0 = adj_TS.X.size()/2;
+	
+	int max = 10;
+	
+	for(int i = 0; i < max; i++)
+	{
+		double b = adj_IN.bilinear_one_step(hom_TS, ret_TS, adj_TS);
+		
+		cout << b << endl;
+		
+		cout << adj_TS.X[adj_IN.pos0].ER << '\t';
+		cout << adj_TS.X[adj_IN.pos0].EI << '\t';
+		cout << adj_TS.X[adj_IN.pos0].G << '\t';
+		cout << adj_TS.X[adj_IN.pos0].Q << '\t';
+		cout << adj_TS.X[adj_IN.pos0].J << '\t';
+		
+		cout << endl;
+		
+		adj_IN.pos0++;
+		if(i%10==0)
+		{
+			cout << "f" << endl;
+		}
+	}
+	
+	cout << adj_IN.pos0 << endl;
+	cout << adj_TS.t[adj_IN.pos0] << endl;
+	
+	
+	
+//	vector<double> bil_prod = adj_IN.bilinear_prod(hom_TS, ret_TS, adj_TS);
 	
 //	vector<pulse> pulse_list = TS.pulse_analysis();
 	
@@ -67,8 +138,10 @@ int main(int argc, char* argv[])
 	
 	
 	
-	TS.write_file("test_ts");
-
+	
+//	hom_TS.write_file("test_hom_ts");
+	ret_TS.write_file("test_ret");
+	adj_TS.write_file("test_adj");
 	
 	time_total.stop();
 	time_total.print_elaps();

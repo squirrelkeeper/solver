@@ -104,10 +104,13 @@ public:
 	timeseries integrate_ret(timeseries);
 	timeseries integrate_adj(timeseries);
 
-	
+	double bilinear_one_step(timeseries, timeseries, timeseries);
+	std::vector<double> bilinear_prod(timeseries, timeseries, timeseries);
+
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_adj(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+
 	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
 
 	

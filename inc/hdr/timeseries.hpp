@@ -32,7 +32,6 @@ public:
 	std::vector<var> X;
 	
 	double I_max;
-	
 	double I_min;
 	double I_mid;
 	double I_mean;
