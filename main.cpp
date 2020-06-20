@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 {
 	timer time_total;
 
+/*
 	allpar_set *AP = new allpar_set("JAU15", "TAU1", "quick");
 	AP->check_cmd_line(argc, argv);
 
@@ -67,11 +68,19 @@ int main(int argc, char* argv[])
 	
 	AP->IP.int_time.par_dbl = 1000;
 	AP->IP.out_time.par_dbl = 400;
+	
 	integrator hom_IN(AP);
 	timeseries hom_TS(AP);
 	hom_IN.initialize(hom_IC);
 	hom_TS = hom_IN.integrate();
 
+	
+	
+
+		
+	
+	
+	
 	AP->IP.int_time.par_dbl = 200;
 	AP->IP.out_time.par_dbl = 50;
 
@@ -82,49 +91,46 @@ int main(int argc, char* argv[])
 
 	integrator adj_IN(AP);
 	timeseries adj_TS(AP);
-	adj_IN.initialize(adj_IC);
+	adj_IN.initialize(ret_IC);
 	adj_TS = adj_IN.integrate_adj(hom_TS);
 
-
-	adj_TS.cut_series("last", 10);
-	adj_TS.reverse_series();
-	adj_TS.cc_series();
-	adj_TS.reset_time();
 	
+
+
+	adj_TS.cut_series("last", 2);
+
+
+//	adj_TS.reverse_series();
+//	adj_TS.cc_series();
+	adj_TS.reset_time();
+
+
+	/*	
 	ret_TS.cut_series("last", 10);
 	ret_TS.reset_time();
 	
 	hom_TS.cut_series("last", 10);
 	hom_TS.reset_time();
+*/
+	
+
+	
+/*	
 	
 	
-	adj_IN.pos0 = adj_TS.X.size()/2;
+	double period = hom_IN.get_period();
 	
-	int max = 10;
+	cout << period << endl;
 	
-	for(int i = 0; i < max; i++)
-	{
-		double b = adj_IN.bilinear_one_step(hom_TS, ret_TS, adj_TS);
-		
-		cout << b << endl;
-		
-		cout << adj_TS.X[adj_IN.pos0].ER << '\t';
-		cout << adj_TS.X[adj_IN.pos0].EI << '\t';
-		cout << adj_TS.X[adj_IN.pos0].G << '\t';
-		cout << adj_TS.X[adj_IN.pos0].Q << '\t';
-		cout << adj_TS.X[adj_IN.pos0].J << '\t';
-		
-		cout << endl;
-		
-		adj_IN.pos0++;
-		if(i%10==0)
-		{
-			cout << "f" << endl;
-		}
-	}
 	
-	cout << adj_IN.pos0 << endl;
-	cout << adj_TS.t[adj_IN.pos0] << endl;
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -139,13 +145,31 @@ int main(int argc, char* argv[])
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 //	hom_TS.write_file("test_hom_ts");
 	ret_TS.write_file("test_ret");
 	adj_TS.write_file("test_adj");
 	
 	time_total.stop();
 	time_total.print_elaps();
-	
+*/	
 	
 	return 0;
 }

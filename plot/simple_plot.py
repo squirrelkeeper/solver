@@ -9,7 +9,7 @@ data_suffix = ".dat"
 files_all = os.listdir(data_path)
 files_dat = list(filter(lambda x: x[-4:] == ".dat", files_all))
 
-file_name = data_path + files_dat[0]
+file_name = data_path + files_dat[1]
 
 data = np.loadtxt(file_name)
 data = list(zip(*data))
@@ -49,16 +49,16 @@ pl.plot(t, I_mean, c='grey', linewidth=0.5)
 #pl.plot(t, thres_tail, c='grey', linewidth=0.5)
 
 
-pl.plot(t, I, c='k', linewidth=0.5)
-pl.plot(t, G, c='r', linewidth=0.5)
-pl.plot(t, Q, c='b', linewidth=0.5)
+pl.plot(t, ER*ER+EI*EI, c='k', linewidth=0.5)
+#l.plot(t, G, c='r', linewidth=0.5)
+#pl.plot(t, Q, c='b', linewidth=0.5)
 
 
 
-#pl.show()
+pl.show()
 
 
 
 
-pl.savefig("lina_out.ts.dat.png", dpi=350)
+#pl.savefig("lina_out.ts.dat.png", dpi=350)
 #pl.savefig("lasse_out.ts.dat.png", dpi=350)

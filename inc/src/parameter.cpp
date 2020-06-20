@@ -227,6 +227,11 @@ void ipar_set::cout_pars(vector<par> collection)
 
 //###########################################
 
+allpar_set::allpar_set()
+{
+
+}
+
 allpar_set::allpar_set(string optL, string optF, string optI)
 {
 	lpar_set LP_init{optL};

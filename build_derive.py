@@ -305,7 +305,7 @@ def derive_adj():
 def build_derive_adj(coll):
 	Psia = coll[0]
 	dPsia = coll[1]
-	rule = '\nvar integrator::derive_adj(var &X, var &XT, var &Xtau, var &Z, var &ZT, var &Ztau, lpar_dbl_set *l, fpar_dbl_set *f)'
+	rule = '\nvar integrator::derive_adj(var &X, var &Z, var &ZT, var &Ztau, lpar_dbl_set *l, fpar_dbl_set *f)'
 	rule+='\n'
 	rule+= '{'
 	rule+= '\n\t//X is the homogenous solution, Z the adjoint pertubation'
@@ -323,6 +323,19 @@ def build_derive_adj(coll):
 		eq = eq.replace('exp(', 'expf(')
 		eq = eq.replace('sin(', 'sinf(')
 		eq = eq.replace('cos(', 'cosf(')
+		
+		eq = eq.replace('XT.ER', 'X.ER')
+		eq = eq.replace('XT.EI', 'X.EI')
+		eq = eq.replace('XT.Q', 'X.Q')
+		eq = eq.replace('XT.G', 'X.G')
+		eq = eq.replace('XT.J', 'X.J')
+		
+		eq = eq.replace('Xtau.ER', 'X.ER')
+		eq = eq.replace('Xtau.EI', 'X.EI')
+		eq = eq.replace('Xtau.Q', 'X.Q')
+		eq = eq.replace('Xtau.G', 'X.G')
+		eq = eq.replace('Xtau.J', 'X.J')
+		
 		
 		eq = repl_square(eq)
 		

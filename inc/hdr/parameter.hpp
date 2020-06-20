@@ -91,6 +91,7 @@ public:
 	fpar_set FP{"def"};
 	ipar_set IP{"def"};
 	
+	allpar_set();
 	allpar_set(std::string optL, std::string optF, std::string optI);
 	allpar_set(lpar_set LP_init, fpar_set FP_init, ipar_set IP_init);
 

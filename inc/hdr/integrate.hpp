@@ -83,6 +83,7 @@ public:
 	var dX;
 	var Xnew;
 	allpar_set *AP;
+	allpar_set AP2;
 	long it;
 	long dim1;
 	long dim2;
@@ -94,13 +95,15 @@ public:
 	int max_rea;
 	bool noise;
 	
-	integrator(allpar_set*);
+	integrator(allpar_set);
 	
 	void initialize(initial_con IC);
 	
 	timeseries integrate();
 	timeseries integrate_noise();
+	double get_period();
 
+	
 	timeseries integrate_ret(timeseries);
 	timeseries integrate_adj(timeseries);
 
@@ -109,7 +112,7 @@ public:
 
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
-	var derive_adj(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
+	var derive_adj(var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 
 	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
 
