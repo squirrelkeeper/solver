@@ -36,12 +36,12 @@ public:
 	double I_mid;
 	double I_mean;
 	
-	allpar_set *AP;
+	allpar_set AP;
 	double seed;
 
 	timeseries();
-	timeseries(allpar_set*);
-	timeseries(double, allpar_set*);
+	timeseries(allpar_set);
+	timeseries(double, allpar_set);
 	
 	std::vector<pulse> pulse_analysis();
 	std::vector<double> get_pulse_dist(std::vector<pulse>);

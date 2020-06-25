@@ -16,14 +16,14 @@ data = list(zip(*data))
 
 t = np.asarray(data[0])
 
-ER = np.asarray(data[1])
-EI = np.asarray(data[2])
+#ER = np.asarray(data[1])
+#EI = np.asarray(data[2])
 
-G = np.asarray(data[3])
-Q = np.asarray(data[4])
-J = np.asarray(data[5])
+#G = np.asarray(data[3])
+#Q = np.asarray(data[4])
+#J = np.asarray(data[5])
 
-I = np.asarray(data[6])
+#I = np.asarray(data[6])
 
 '''
 t = t[len(I)-int(len(I)/10)::]
@@ -50,6 +50,9 @@ pl.plot(t, I_mean, c='grey', linewidth=0.5)
 
 
 pl.plot(t, ER*ER+EI*EI, c='k', linewidth=0.5)
+pl.plot(t, ER, c='c', linewidth=0.5)
+pl.plot(t, EI, c='m', linewidth=0.5)
+
 #l.plot(t, G, c='r', linewidth=0.5)
 #pl.plot(t, Q, c='b', linewidth=0.5)
 

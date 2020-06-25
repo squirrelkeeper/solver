@@ -420,11 +420,11 @@ def build_bilinear(coll):
 		eq[i] = eq[i].replace('Y.', 'Y[pos0].')
 		eq[i] = eq[i].replace('Z.', 'Z[pos0].')
 		
-		eq[i] = eq[i].replace('XT.', 'X[pos0+r].')		
+		eq[i] = eq[i].replace('XT.', 'X[pos0+r+dim1].')		
 		eq[i] = eq[i].replace('YT.', 'Y[pos0+r].')
 		eq[i] = eq[i].replace('ZT.', 'Z[pos0+r+dim1].')
 		
-		eq[i] = eq[i].replace('Xtau.', 'X[pos0+r].')
+		eq[i] = eq[i].replace('Xtau.', 'X[pos0+r+dim2].')
 		eq[i] = eq[i].replace('Ytau.', 'Y[pos0+r].')
 		eq[i] = eq[i].replace('Ztau.', 'Z[pos0+r+dim2].')	
 	

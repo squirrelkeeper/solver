@@ -34,93 +34,78 @@ int main(int argc, char* argv[])
 {
 	timer time_total;
 
-/*
-	allpar_set *AP = new allpar_set("JAU15", "TAU1", "quick");
-	AP->check_cmd_line(argc, argv);
+
+	allpar_set AP("JAU15", "TAU1", "quick");
+	AP.check_cmd_line(argc, argv);
+
+	vector<double> hom_const_IC = {0.4, 0.0, 4.0, 1.0, 1.0};
+	vector<double> adj1_const_IC = {2.0, 0.0, 1.0, 1.0, 1.0};
+	vector<double> adj2_const_IC = {0.0, 1.0, 0.0, 0.0, 0.0};
+	
+	
+	
+	initial_con hom_IC("const", hom_const_IC, AP);
+	initial_con adj1_IC("const", adj1_const_IC, AP);
+	initial_con adj2_IC("const", adj2_const_IC, AP);
 
 	
-	var X_IC;
-	X_IC.ER = 0.4;
-	X_IC.EI = 0.0;
-	X_IC.G = 4.0;
-	X_IC.Q = 1.0;
-	X_IC.J = 0.4;
-	initial_con hom_IC("const", X_IC, AP);
-	
-
-	var Y_IC;
-	Y_IC.ER = 2.0;
-	Y_IC.EI = 0.0;
-	Y_IC.G = 1.0;
-	Y_IC.Q = 1.0;
-	Y_IC.J = 0.0;
-	initial_con ret_IC("const", Y_IC, AP);
-
-	
-	var Z_IC;
-	Z_IC.ER = 0.0;
-	Z_IC.EI = 1.0;
-	Z_IC.G = 0.0;
-	Z_IC.Q = 0.0;
-	Z_IC.J = 0.0;
-	initial_con adj_IC("const", Z_IC, AP);
-	
-	
-	AP->IP.int_time.par_dbl = 1000;
-	AP->IP.out_time.par_dbl = 400;
+	AP.IP.int_time.par_dbl = 1000;
+	AP.IP.out_time.par_dbl = 200;
 	
 	integrator hom_IN(AP);
 	timeseries hom_TS(AP);
 	hom_IN.initialize(hom_IC);
 	hom_TS = hom_IN.integrate();
 
-	
-	
-
-		
-	
-	
-	
-	AP->IP.int_time.par_dbl = 200;
-	AP->IP.out_time.par_dbl = 50;
-
-	integrator ret_IN(AP);
-	timeseries ret_TS(AP);
-	ret_IN.initialize(ret_IC);
-	ret_TS = ret_IN.integrate_ret(hom_TS);
-
-	integrator adj_IN(AP);
-	timeseries adj_TS(AP);
-	adj_IN.initialize(ret_IC);
-	adj_TS = adj_IN.integrate_adj(hom_TS);
-
-	
-
-
-	adj_TS.cut_series("last", 2);
-
-
-//	adj_TS.reverse_series();
-//	adj_TS.cc_series();
-	adj_TS.reset_time();
-
-
-	/*	
-	ret_TS.cut_series("last", 10);
-	ret_TS.reset_time();
-	
-	hom_TS.cut_series("last", 10);
-	hom_TS.reset_time();
-*/
-	
-
+	AP.IP.int_time.par_dbl = 100;
+	AP.IP.out_time.par_dbl = 10;
 	
 /*	
-	
-	
-	double period = hom_IN.get_period();
+	integrator temp_IN(AP);
+	temp_IN = hom_IN;
+	double period = temp_IN.get_period();
 	
 	cout << period << endl;
+// */	
+	integrator adj1_IN(AP);
+	timeseries adj1_TS(AP);
+	adj1_IN.initialize(adj1_IC);
+	adj1_TS = adj1_IN.integrate_adj(hom_TS);
+
+	cout << 1 << endl;
+	
+	integrator adj2_IN(AP);
+	timeseries adj2_TS(AP);
+	adj2_IN.initialize(adj2_IC);
+	adj2_TS = adj2_IN.integrate_adj(hom_TS);
+	
+	
+	vector<timeseries> neutral_modes = hom_IN.integrate_get_neutral_modes();
+
+	neutral_modes[0].cut_series("last", 10);
+	neutral_modes[1].cut_series("last", 10);
+
+	
+	
+	
+	
+	double b11 = adj1_IN.bilinear_one_step(hom_TS, neutral_modes[0], adj1_TS);
+	double b12 = adj1_IN.bilinear_one_step(hom_TS, neutral_modes[1], adj1_TS);
+	double b21 = adj2_IN.bilinear_one_step(hom_TS, neutral_modes[0], adj1_TS);
+	double b22 = adj2_IN.bilinear_one_step(hom_TS, neutral_modes[1], adj1_TS);
+	
+	cout << b11 << endl;
+	cout << b12 << endl;
+	cout << b21 << endl;
+	cout << b22 << endl;
+	
+/*	
+	hom_TS.write_file("test_hom");
+	adj2_TS.write_file("test_adj1");
+	adj1_TS.write_file("test_adj2");
+	neutral_modes[0].write_file("test_neut1");
+	neutral_modes[1].write_file("test_neut2");
+*/	
 	
 	
 	
@@ -130,46 +115,10 @@ int main(int argc, char* argv[])
 	
 	
 	
-	
-	
-	
-	
-//	vector<double> bil_prod = adj_IN.bilinear_prod(hom_TS, ret_TS, adj_TS);
-	
-//	vector<pulse> pulse_list = TS.pulse_analysis();
-	
-//	TS.cout_pulse_data(pulse_list);
-	
-//	vector<double> pulse_dist = TS.get_pulse_dist(pulse_list);
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	hom_TS.write_file("test_hom_ts");
-	ret_TS.write_file("test_ret");
-	adj_TS.write_file("test_adj");
 	
 	time_total.stop();
 	time_total.print_elaps();
-*/	
+	
 	
 	return 0;
 }

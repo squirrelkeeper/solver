@@ -47,10 +47,10 @@ timeseries::timeseries()
 {
 }
 
-timeseries::timeseries(allpar_set *init_AP)
+timeseries::timeseries(allpar_set init_AP)
 {
 	AP = init_AP;
-	ipar_dbl_set ip(*AP);
+	ipar_dbl_set ip(AP);
 
 	len_dbl = ip.out_time;
 	len = len_dbl/ip.dt;
@@ -60,10 +60,10 @@ timeseries::timeseries(allpar_set *init_AP)
 	X.resize(len);
 }
 
-timeseries::timeseries(double init_len, allpar_set *init_AP)
+timeseries::timeseries(double init_len, allpar_set init_AP)
 {
 	AP = init_AP;
-	ipar_dbl_set ip(*AP);
+	ipar_dbl_set ip(AP);
 
 	len_dbl = init_len;
 	len = len_dbl/ip.dt;
@@ -80,12 +80,12 @@ void timeseries::write_file(string file_name)
 	
 	
 	srand (time(NULL));
-	int batch_no = rand()%10000;
+//	int batch_no = rand()%10000;
 
 	full_name << "data/";
 	full_name << file_name;
 	full_name << "_D";
-	full_name << AP->IP.D.par_dbl;
+	full_name << AP.IP.D.par_dbl;
 //	full_name << "_ba";
 //	full_name << batch_no;
 	full_name << ".ts.dat";
@@ -134,13 +134,13 @@ vector<pulse> timeseries::pulse_analysis()
 	auto max_it = max_element(I.begin(), I.end());
 	I_max = I[distance(I.begin(), max_it)];
 
-	double thres = 0.75 * AP->IP.D.par_dbl * I_max;
+	double thres = 0.75 * AP.IP.D.par_dbl * I_max;
 	
-	double thres_left = 0.75 * AP->IP.D.par_dbl * I_max;
-	double thres_right = 0.75 * AP->IP.D.par_dbl * I_max;
+//	double thres_left = 0.75 * AP.IP.D.par_dbl * I_max;
+//	double thres_right = 0.75 * AP.IP.D.par_dbl * I_max;
 	
 	bool pulse_detected = false;
-	long unit = ceil(AP->LP.T.par_dbl/(1000.0*AP->IP.dt.par_dbl));
+	long unit = ceil(AP.LP.T.par_dbl/(1000.0*AP.IP.dt.par_dbl));
 	long whs = 5*unit;
 	
 	long baseline_gap = 2 * unit;
@@ -345,7 +345,7 @@ vector<double> timeseries::get_pulse_dist(vector<pulse> pulse_list)
 
 void timeseries::cut_series(string opt, double time_interval)
 {
-	long new_len = time_interval/AP->IP.dt.par_dbl;
+	long new_len = time_interval/AP.IP.dt.par_dbl;
 
 	vector<double> new_t(new_len);
 	vector<double> new_I(new_len);
@@ -404,7 +404,7 @@ void timeseries::cc_series()
 
 void timeseries::reset_time()
 {
-	double dt = AP->IP.dt.par_dbl;
+	double dt = AP.IP.dt.par_dbl;
 	
 	for(long i = 0; i < len; i++)
 	{

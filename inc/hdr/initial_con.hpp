@@ -10,10 +10,11 @@ class initial_con
 public:
 	std::vector<var> hist;
 
-	initial_con(allpar_set*);
-	initial_con(std::string, allpar_set*);
-	initial_con(std::string, double, double, allpar_set*);
-	initial_con(std::string, var, allpar_set*);
+	initial_con(allpar_set);
+	initial_con(std::string, allpar_set);
+	initial_con(std::string, double, double, allpar_set);
+	initial_con(std::string, std::vector<double>, allpar_set);
+	initial_con(std::string, var, allpar_set);
 	initial_con(timeseries);
 };
 

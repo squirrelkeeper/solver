@@ -82,8 +82,7 @@ public:
 	std::vector<var> X;
 	var dX;
 	var Xnew;
-	allpar_set *AP;
-	allpar_set AP2;
+	allpar_set AP;
 	long it;
 	long dim1;
 	long dim2;
@@ -106,9 +105,11 @@ public:
 	
 	timeseries integrate_ret(timeseries);
 	timeseries integrate_adj(timeseries);
+	
+	std::vector<timeseries> integrate_get_neutral_modes();
 
 	double bilinear_one_step(timeseries, timeseries, timeseries);
-	std::vector<double> bilinear_prod(timeseries, timeseries, timeseries);
+	std::vector<double> bilinear_prod(double, timeseries, timeseries, timeseries);
 
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);

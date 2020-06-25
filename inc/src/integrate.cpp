@@ -72,19 +72,18 @@ static void LOOKUP_COS_INIT()
 
 integrator::integrator(allpar_set ap_init)
 {
-	AP2 = ap_init;
-	AP = &ap_init;
+	AP = ap_init;
 	
-	lpar_dbl_set lp(AP2);
-	fpar_dbl_set fp(AP2);
-	ipar_dbl_set ip(AP2);
+	lpar_dbl_set lp(AP);
+	fpar_dbl_set fp(AP);
+	ipar_dbl_set ip(AP);
 
 	max_rea = (int)(ip.rea);
 	
 	it = (long)(ip.int_time / ip.dt);
 
-	double tau1 = AP->smaller_delay();
-	double tau2 = AP->larger_delay();
+	double tau1 = AP.smaller_delay();
+	double tau2 = AP.larger_delay();
 
 	dim1 = (long)(floor(tau1 / ip.dt));
 	dim2 = (long)(floor(tau2 / ip.dt)+1);
@@ -96,7 +95,7 @@ integrator::integrator(allpar_set ap_init)
 	Time = 0.0;
 	rea = 0;
 
-	noise = (AP->IP.D.par_dbl == 0.0) ? false : true; 
+	noise = (AP.IP.D.par_dbl == 0.0) ? false : true; 
 	
 	X.resize(dim2);
 }
@@ -104,7 +103,7 @@ integrator::integrator(allpar_set ap_init)
 
 void integrator::initialize(initial_con IC)
 {
-	noise = (AP->IP.D.par_dbl == 0.0) ? false : true; 
+	noise = (AP.IP.D.par_dbl == 0.0) ? false : true; 
 
 	if(dim2 != ((long)IC.hist.size()))
 	{
@@ -127,9 +126,9 @@ timeseries integrator::integrate()
 	LOOKUP_COS_INIT();
 
 
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 	
 	
 	for(long i=0; i < it-TS.len; i++)
@@ -204,9 +203,9 @@ timeseries integrator::integrate_noise()
 	LOOKUP_COS_INIT();
 
 
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 	
 
 	for(long i=0; i < it-TS.len; i++)
@@ -294,9 +293,9 @@ double integrator::get_period()
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
 	
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 	
 	for(long i=0; i < N; i++)
 	{
@@ -379,7 +378,88 @@ double integrator::get_period()
 
 
 
+vector<timeseries> integrator::integrate_get_neutral_modes()
+{
+	timeseries mode1(AP);
+	timeseries mode2(AP);
 
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+
+
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
+	
+	
+	for(long i=0; i < it-mode1.len; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	}
+	
+	for(long i=0; i < mode1.len; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	
+		
+		mode1.X[i] = dX;
+		mode1.t[i] = Time;
+		mode1.I[i] = dX.ER*dX.ER+dX.EI*dX.EI;
+		
+		
+		mode2.X[i].ER = -Xnew.EI;
+		mode2.X[i].EI =  Xnew.ER;
+		mode2.X[i].G =  0;
+		mode2.X[i].Q =  0;
+		mode2.X[i].J =  0;
+		
+		mode2.t[i] = Time;
+		mode2.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+	}
+	
+	vector<timeseries> modes = {mode1,mode2};
+
+	
+ 	return modes;
+}
 
 
 
@@ -399,12 +479,12 @@ timeseries integrator::integrate_ret(timeseries hom)
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
 	
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 
-	double tau1 = AP->smaller_delay();
-	double tau2 = AP->larger_delay();
+	double tau1 = AP.smaller_delay();
+	double tau2 = AP.larger_delay();
 	
 	long hpos0 = (long)((double)(hom.X.size())*0.5);
 	long hpos1 = hpos0 - (long)(floor(tau1 / ip->dt));
@@ -491,16 +571,12 @@ timeseries integrator::integrate_adj(timeseries hom)
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
 	
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 
-	double tau1 = AP->smaller_delay();
-	double tau2 = AP->larger_delay();
-	
 	long hpos0 = (long)((double)(hom.X.size())*0.5);
 	
-
 	for(long i=0; i < it-TS.len; i++)
 	{
 		
@@ -567,16 +643,23 @@ timeseries integrator::integrate_adj(timeseries hom)
 }
 
 
+	
+
+
+
+
 double integrator::bilinear_one_step(timeseries hom, timeseries ret, timeseries adj)
 {
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
 	
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
-
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+//	ipar_dbl_set *ip = new ipar_dbl_set(AP);
+	
+	pos0 = (long)(hom.X.size() * 0.5);
+	
 	double bil;
 	
 	bil = bilinear_step(hom.X, ret.X, adj.X, lp, fp);
@@ -589,18 +672,34 @@ double integrator::bilinear_one_step(timeseries hom, timeseries ret, timeseries 
 
 
 
-vector<double> integrator::bilinear_prod(timeseries hom, timeseries ret, timeseries adj)
+vector<double> integrator::bilinear_prod(double period, timeseries hom, timeseries ret, timeseries adj)
 {
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
 	
-	lpar_dbl_set *lp = new lpar_dbl_set(*AP);
-	fpar_dbl_set *fp = new fpar_dbl_set(*AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(*AP);
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 
-	vector<double> bil;
+	long int_len = (long)((period)/ip->dt);
 
+	vector<double> bil(int_len, 0);
+	
+	
+	long store_pos0 = pos0;
+	
+	pos0 = (long)((AP.larger_delay())/ip->dt);
+	
+	for(long i = 0; i < int_len; i++)
+	{
+		bil[i] = bilinear_step(hom.X, ret.X, adj.X, lp, fp);
+//		cout << bil[i] << endl;
+		pos0++;
+	}
+	
+	
+	pos0 = store_pos0;
 	
 	return bil;
 }
@@ -679,12 +778,12 @@ double integrator::bilinear_step(vector<var> &X, vector<var> &Y, vector<var> &Z,
 
 	for(long r = -dim1; r < 0; r++)
 	{
-		b+=Y[pos0+r].EI*(Z[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + Z[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw)) + Y[pos0+r].ER*(-Z[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + Z[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw)) + Y[pos0+r].G*(Z[pos0+r+dim1].EI*(-0.5*X[pos0+r].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw)) + Z[pos0+r+dim1].ER*(0.5*X[pos0+r].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw))) + Y[pos0+r].Q*(Z[pos0+r+dim1].EI*(0.5*X[pos0+r].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw)) + Z[pos0+r+dim1].ER*(-0.5*X[pos0+r].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*sinf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r].G - 0.5*X[pos0+r].Q)*cosf(0.5*X[pos0+r].G*l->ag - 0.5*X[pos0+r].Q*l->aq + l->T*l->dw)));
+		b+=Y[pos0+r].EI*(Z[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + Z[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw)) + Y[pos0+r].ER*(-Z[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + Z[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw)) + Y[pos0+r].G*(Z[pos0+r+dim1].EI*(-0.5*X[pos0+r+dim1].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw)) + Z[pos0+r+dim1].ER*(0.5*X[pos0+r+dim1].EI*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].ER*l->ag*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw))) + Y[pos0+r].Q*(Z[pos0+r+dim1].EI*(0.5*X[pos0+r+dim1].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw)) + Z[pos0+r+dim1].ER*(-0.5*X[pos0+r+dim1].EI*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].EI*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) + 0.5*X[pos0+r+dim1].ER*l->aq*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*sinf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw) - 0.5*X[pos0+r+dim1].ER*l->g*l->sqrtkap*expf(0.5*X[pos0+r+dim1].G - 0.5*X[pos0+r+dim1].Q)*cosf(0.5*X[pos0+r+dim1].G*l->ag - 0.5*X[pos0+r+dim1].Q*l->aq + l->T*l->dw)));
 	}
 
 	for(long r = -dim2; r < 0; r++)
 	{
-		b+=2*X[pos0+r].EI*Y[pos0+r].EI*Z[pos0+r+dim2].J*f->K*f->wLP + 2*X[pos0+r].ER*Y[pos0+r].ER*Z[pos0+r+dim2].J*f->K*f->wLP;
+		b+=2*X[pos0+r+dim2].EI*Y[pos0+r].EI*Z[pos0+r+dim2].J*f->K*f->wLP + 2*X[pos0+r+dim2].ER*Y[pos0+r].ER*Z[pos0+r+dim2].J*f->K*f->wLP;
 	}
 
 	return b;

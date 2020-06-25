@@ -12,10 +12,10 @@
 using namespace std;
 
 
-initial_con::initial_con(allpar_set* init_AP)
+initial_con::initial_con(allpar_set init_AP)
 {
-	double tau = init_AP->larger_delay();
-	double dt = init_AP->IP.dt.par_dbl;
+	double tau = init_AP.larger_delay();
+	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
 	hist.resize(len);
@@ -30,10 +30,10 @@ initial_con::initial_con(allpar_set* init_AP)
 	}
 }
 
-initial_con::initial_con(string opt, allpar_set* init_AP)
+initial_con::initial_con(string opt, allpar_set init_AP)
 {
-	double tau = init_AP->larger_delay();
-	double dt = init_AP->IP.dt.par_dbl;
+	double tau = init_AP.larger_delay();
+	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
 	hist.resize(len);
@@ -57,10 +57,10 @@ initial_con::initial_con(string opt, allpar_set* init_AP)
 
 
 
-initial_con::initial_con(string opt, double first, double sec, allpar_set* init_AP)
+initial_con::initial_con(string opt, double first, double sec, allpar_set init_AP)
 {
-	double tau = init_AP->larger_delay();
-	double dt = init_AP->IP.dt.par_dbl;
+	double tau = init_AP.larger_delay();
+	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
 	hist.resize(len);
@@ -105,11 +105,10 @@ initial_con::initial_con(string opt, double first, double sec, allpar_set* init_
 	}
 }
 
-
-initial_con::initial_con(string opt, var X_IC, allpar_set* init_AP)
+initial_con::initial_con(string opt, var X_IC, allpar_set init_AP)
 {
-	double tau = init_AP->larger_delay();
-	double dt = init_AP->IP.dt.par_dbl;
+	double tau = init_AP.larger_delay();
+	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
 	hist.resize(len);
@@ -127,10 +126,37 @@ initial_con::initial_con(string opt, var X_IC, allpar_set* init_AP)
 	}
 }
 
+initial_con::initial_con(string opt, vector<double> X_IC, allpar_set init_AP)
+{
+	double tau = init_AP.larger_delay();
+	double dt = init_AP.IP.dt.par_dbl;
+	long len = (long)(floor(tau / dt)+1);
+	
+	hist.resize(len);
+	
+	if(opt == "const")
+	{
+		for(long i = 0; i < len; i++)
+		{
+			hist[i].ER = X_IC[0];
+			hist[i].EI = X_IC[1];
+			hist[i].G = X_IC[2];
+			hist[i].Q = X_IC[3];
+			hist[i].J = X_IC[4];
+		}
+	}	
+	else
+	{
+		cout << "err003" << endl;
+	}
+}
+
+
+
 initial_con::initial_con(timeseries TS)
 {
-	double tau = TS.AP->larger_delay();
-	double dt = TS.AP->IP.dt.par_dbl;
+	double tau = TS.AP.larger_delay();
+	double dt = TS.AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 
 	hist.resize(len);
