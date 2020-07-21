@@ -99,6 +99,8 @@ public:
 	void initialize(initial_con IC);
 	
 	timeseries integrate();
+	std::tuple<timeseries,ts_evaluation> integrate_analysis(std::string);
+
 	timeseries integrate_noise();
 	double get_period();
 
@@ -117,7 +119,8 @@ public:
 
 	double bilinear_step(std::vector<var>&, std::vector<var>&, std::vector<var>&, lpar_dbl_set*, fpar_dbl_set*);
 
-	
+	double InterpolQuadExtrPos(double, double, double, double, double, double);
+	double InterpolQuadExtrVal(double, double, double, double, double, double, double);	
 };
 
 #endif

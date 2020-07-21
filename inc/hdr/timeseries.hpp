@@ -55,4 +55,47 @@ public:
 	void write_file(std::string);
 };
 
+class ts_evaluation
+{
+public:
+// Tolerances
+	double ExtrTol = 1e-16;
+	double MaxMinDscr = 1e-5;
+	double AverageThres = 1e-6;
+	double DblCountTol = 0.05;
+
+
+
+	allpar_set AP;
+	std::vector<double>* I_ptr;
+	std::vector<double>* t_ptr;
+	long len;
+	
+	double average, period;
+	double GlobalSupr, GlobalInfi;
+	double t_offset, dt;
+	std::vector<double> MaxPos;
+	std::vector<double> MaxVal;
+	std::vector<double> MinPos;
+	std::vector<double> MinVal;
+	std::vector<double> UniqMaxPos;
+	std::vector<double> UniqMaxVal;
+	std::vector<double> UniqMinPos;
+	std::vector<double> UniqMinVal;
+
+
+	ts_evaluation(std::vector<double>*, std::vector<double>*, allpar_set);
+	ts_evaluation(timeseries*, allpar_set);
+	
+	void FindUniqMax();
+	void FindPeriod();
+	
+	double InterpolQuadExtrPos(double, double, double, double, double, double);
+	double InterpolQuadExtrVal(double, double, double, double, double, double, double);
+};
+
+
+
+
+
 #endif

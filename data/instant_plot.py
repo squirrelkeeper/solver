@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pl
 
-file_name = "test_neut1_D0.ts.dat"
+file_name = "test_hom_D0.ts.dat"
 
 
 data = np.loadtxt(file_name)

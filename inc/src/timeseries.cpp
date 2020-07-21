@@ -414,7 +414,214 @@ void timeseries::reset_time()
 
 
 
+ts_evaluation::ts_evaluation(vector<double> *I_ptr_init, vector<double> *t_ptr_init, allpar_set AP_init)
+{
+	I_ptr = I_ptr_init;
+	t_ptr = t_ptr_init;
+	len = (long)(*I_ptr).size();
+	t_offset = t_ptr->at(0);
+	
+	AP = AP_init;
+	dt = AP.IP.dt.par_dbl;
+	
+	MaxPos.resize(0);
+	MaxVal.resize(0);
+	MinPos.resize(0);
+	MinVal.resize(0);
+	UniqMaxPos.resize(0);
+	UniqMaxVal.resize(0);
+	UniqMinPos.resize(0);
+	UniqMinVal.resize(0);
+	
+	average = 0;
+	period = 0;
+
+	GlobalSupr = I_ptr->at(0);
+	GlobalInfi = I_ptr->at(0);
+}
+
+
+ts_evaluation::ts_evaluation(timeseries *TS_init, allpar_set AP_init)
+{
+	I_ptr = &TS_init->I;
+	t_ptr = &TS_init->t;
+	len = TS_init->len;
+	t_offset = t_ptr->at(0);
+	
+	AP = AP_init;
+	dt = AP.IP.dt.par_dbl;
+	
+	MaxPos.resize(0);
+	MaxVal.resize(0);
+	MinPos.resize(0);
+	MinVal.resize(0);
+	UniqMaxPos.resize(0);
+	UniqMaxVal.resize(0);
+	UniqMinPos.resize(0);
+	UniqMinVal.resize(0);
+	
+	average = 0;
+	period = 0;
+
+	GlobalSupr = I_ptr->at(0);
+	GlobalInfi = I_ptr->at(0);
+}
 
 
 
 
+
+void ts_evaluation::FindUniqMax()
+{
+	int max_cnt;
+	
+	if(GlobalSupr/GlobalInfi < (1.0 + MaxMinDscr) || average < AverageThres)
+	{
+		max_cnt = 0;
+	}
+	else
+	{
+		max_cnt = 0;
+		bool doublecount;
+		
+		for(unsigned i = 0; i < MaxVal.size(); i++)
+		{
+			doublecount = false;
+			
+			for(int j = 0; j < max_cnt; j++)
+			{
+				if(abs(MaxVal[i]-average) > (1.0-DblCountTol) * abs(UniqMaxVal[j]-average) && abs(MaxVal[i]-average) < (1.0+DblCountTol) * abs(UniqMaxVal[j]-average))
+				{
+					doublecount = true;
+				}
+			}
+			if(doublecount == false)
+			{
+				UniqMaxPos.push_back(MaxPos[i]);
+				UniqMaxVal.push_back(MaxVal[i]);
+				max_cnt += 1;
+			}
+		}
+	}
+}
+
+
+
+
+void ts_evaluation::FindPeriod()
+{
+	int max_cnt;
+	
+	if(GlobalSupr/GlobalInfi < (1.0 + MaxMinDscr) || average < AverageThres)
+	{
+		max_cnt = 0;
+		period = 0;
+	}
+	else
+	{
+		max_cnt = 0;
+		bool doublecount;
+		
+		for(unsigned i = 0; i < MaxVal.size(); i++)
+		{
+			doublecount = false;
+			
+			for(int j = 0; j < max_cnt; j++)
+			{
+				if(abs(MaxVal[i]-average) > (1.0-DblCountTol) * abs(UniqMaxVal[j]-average) && abs(MaxVal[i]-average) < (1.0+DblCountTol) * abs(UniqMaxVal[j]-average))
+				{
+					doublecount = true;
+				}
+			}
+			if(doublecount == false)
+			{
+				max_cnt += 1;
+			}
+		}
+	}
+	
+	cout << max_cnt << endl;
+}
+
+
+
+
+
+/*
+void ts_evaluation::FindPeriod()
+{
+	std::tuple<int, double> out;
+	
+	//returns number of unique ML maxima and ML period
+	double tMax_first, tMax_last, period;
+	int firstMaxRep = 0;
+	
+	if(GlobalSupr/GlobalInfi < (1.0 + MaxMinDscr) || average < AverageThres)
+	{
+		out = std::make_tuple(0,-1.0);
+	}
+	else
+	{
+		int max_counter = 0;
+		bool doublecount;
+		
+		for(std::size_t k = 0; k < maxima.size(); k++)
+		{
+			if(max_counter == 0)
+			{
+				tMax_first = maxima_tvec[k];
+			}
+			
+			doublecount = false;
+			
+			for(int l = 0; l < max_counter; l++)
+			{
+				if(fabs(maxima[k]-average) > (1.0-doubleCountTol) * fabs(uniqueMax[l]-average) && fabs(maxima[k]-average) < (1.0+doubleCountTol) * fabs(uniqueMax[l]-average))
+				{
+					doublecount = true;
+				}
+				
+				if(doublecount == true && l == 0)
+				{
+					tMax_last = maxima_tvec[k];
+					firstMaxRep += 1;
+				}
+			}
+			if(doublecount == false && maxima[k] > MLpulse_thresh)
+			{
+				uniqueMax.push_back(maxima[k]);
+				uniqueMax_tvec.push_back(maxima_tvec[k]);
+				max_counter += 1;
+			}
+		}
+		
+		if(firstMaxRep == 0)
+		{
+			period = -1;
+		}
+		else
+		{
+			period = (tMax_last-tMax_first)/(double)firstMaxRep;
+		}
+		
+		out = std::make_tuple(max_counter, period);
+	}
+}
+*/
+
+
+
+
+
+
+
+double ts_evaluation::InterpolQuadExtrPos(double a, double b, double c, double fa, double fb, double fc)
+{
+	return b + (-0.5*(-a + b)*(-a + b)*(-fb + fc) + 0.5*(-b + c)*(-b + c)*(fa - fb))/((-a + b)*(-fb + fc) + (-b + c)*(fa - fb));
+}
+
+
+double ts_evaluation::InterpolQuadExtrVal(double a, double b, double c, double fa, double fb, double fc, double tmax)
+{
+	return (fa*(b - c)*(b - tmax)*(c - tmax) - fb*(a - c)*(a - tmax)*(c - tmax) + fc*(a - b)*(a - tmax)*(b - tmax))/((a - b)*(a - c)*(b - c));
+}
