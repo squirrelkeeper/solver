@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as pl
+from scipy.interpolate import griddata
 
 file_name = "test_hom_D0.ts.dat"
 
@@ -26,8 +27,6 @@ ax2.plot(t, ER*ER+EI*EI)
 ax3.plot(t, G)
 ax3.plot(t, Q)
 
-
-print(np.sqrt(sum(ER*ER+EI*EI)*0.0001)*0.2*25000)
 
 #pl.plot(data)
 

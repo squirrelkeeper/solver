@@ -505,110 +505,78 @@ void ts_evaluation::FindUniqMax()
 	}
 }
 
-
-
-
 void ts_evaluation::FindPeriod()
 {
-	int max_cnt;
+	vector<double> MaxPattern = {};
+	int seq_num = 0;
+	int per_num = 0;
+
 	
-	if(GlobalSupr/GlobalInfi < (1.0 + MaxMinDscr) || average < AverageThres)
+	if(MaxVal.size()==0)
 	{
-		max_cnt = 0;
-		period = 0;
+		per_num = -1.0;
 	}
 	else
 	{
-		max_cnt = 0;
-		bool doublecount;
-		
 		for(unsigned i = 0; i < MaxVal.size(); i++)
 		{
-			doublecount = false;
+			MaxPattern.push_back(MaxVal[i]);
+			bool con;
 			
-			for(int j = 0; j < max_cnt; j++)
+			for(unsigned j = 0; j < MaxVal.size(); j++)
 			{
-				if(abs(MaxVal[i]-average) > (1.0-DblCountTol) * abs(UniqMaxVal[j]-average) && abs(MaxVal[i]-average) < (1.0+DblCountTol) * abs(UniqMaxVal[j]-average))
+				con = true;
+				if( !is_approx(MaxPattern[j%MaxPattern.size()], MaxVal[j], "rel", DblCountTol) )
 				{
-					doublecount = true;
+					seq_num = 0;
+					con = false;
+					break;
+				}
+				if(j%MaxPattern.size() == MaxPattern.size()-1)
+				{
+					seq_num++;
 				}
 			}
-			if(doublecount == false)
+			if(con)
 			{
-				max_cnt += 1;
+				per_num = i+1;
+				break;
 			}
 		}
 	}
 	
-	cout << max_cnt << endl;
-}
-
-
-
-
-
-/*
-void ts_evaluation::FindPeriod()
-{
-	std::tuple<int, double> out;
-	
-	//returns number of unique ML maxima and ML period
-	double tMax_first, tMax_last, period;
-	int firstMaxRep = 0;
-	
-	if(GlobalSupr/GlobalInfi < (1.0 + MaxMinDscr) || average < AverageThres)
+	if(seq_num > 1)
 	{
-		out = std::make_tuple(0,-1.0);
+		period = (MaxPos[seq_num*per_num-1]-MaxPos[0])/((double)seq_num);
 	}
 	else
 	{
-		int max_counter = 0;
-		bool doublecount;
-		
-		for(std::size_t k = 0; k < maxima.size(); k++)
-		{
-			if(max_counter == 0)
-			{
-				tMax_first = maxima_tvec[k];
-			}
-			
-			doublecount = false;
-			
-			for(int l = 0; l < max_counter; l++)
-			{
-				if(fabs(maxima[k]-average) > (1.0-doubleCountTol) * fabs(uniqueMax[l]-average) && fabs(maxima[k]-average) < (1.0+doubleCountTol) * fabs(uniqueMax[l]-average))
-				{
-					doublecount = true;
-				}
-				
-				if(doublecount == true && l == 0)
-				{
-					tMax_last = maxima_tvec[k];
-					firstMaxRep += 1;
-				}
-			}
-			if(doublecount == false && maxima[k] > MLpulse_thresh)
-			{
-				uniqueMax.push_back(maxima[k]);
-				uniqueMax_tvec.push_back(maxima_tvec[k]);
-				max_counter += 1;
-			}
-		}
-		
-		if(firstMaxRep == 0)
-		{
-			period = -1;
-		}
-		else
-		{
-			period = (tMax_last-tMax_first)/(double)firstMaxRep;
-		}
-		
-		out = std::make_tuple(max_counter, period);
+		period = -1;
 	}
 }
-*/
 
+
+
+
+bool ts_evaluation::is_approx(double x, double y, string opt, double val)
+{
+	bool con = false;
+
+	if(opt == "eq")
+	{
+		con = (x == y);
+	}
+	else if(opt == "abs")
+	{
+		con = (x >= y-val && x <= y+val);
+	}
+	else if(opt == "rel")
+	{
+		con = (x >= y*(1-val) && x <= y*(1+val));
+	}
+	
+	return con;
+}
 
 
 

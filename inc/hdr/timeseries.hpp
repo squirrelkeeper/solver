@@ -92,6 +92,8 @@ public:
 	
 	double InterpolQuadExtrPos(double, double, double, double, double, double);
 	double InterpolQuadExtrVal(double, double, double, double, double, double, double);
+	
+	bool is_approx(double, double, std::string, double);
 };
 
 

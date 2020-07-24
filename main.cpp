@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 
 	
 	AP.IP.int_time.par_dbl = 1000;
-	AP.IP.out_time.par_dbl = 10;
+	AP.IP.out_time.par_dbl = 100;
 	
 //	AP.IP.D.par_dbl = 0.2;
 
