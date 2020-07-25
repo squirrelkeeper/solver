@@ -503,6 +503,13 @@ void ts_evaluation::FindUniqMax()
 			}
 		}
 	}
+	
+	if(max_cnt > 1)
+	{
+		av_max_dist = (MaxPos[0]-MaxPos[MaxPos.size()-1])/((double)(max_cnt-1));
+	}
+	
+	uniq_max_num = max_cnt;
 }
 
 void ts_evaluation::FindPeriod()
@@ -551,7 +558,55 @@ void ts_evaluation::FindPeriod()
 	}
 	else
 	{
-		period = -1;
+		period = -1.0;
+	}
+}
+
+
+void ts_evaluation::FindState()
+{
+	double T0 = AP.LP.T.par_dbl; 
+	
+	//test for transients
+	if(uniq_max_num == 0 && average < AverageThres)
+	{
+		//off
+		state = 0;
+	}
+	else if(uniq_max_num == 0 && average > AverageThres)
+	{
+		//cw
+		state = 1000;
+	}
+	else if(uniq_max_num == 1 && T0/av_max_dist > 0.5)
+	{
+		//FML + HML
+		state = (int)(round(T0/period));
+	}
+	else if(uniq_max_num > 1 && uniq_max_num <= 15 && T0/av_max_dist > 1.5 && T0/period < 1.4)
+	{
+		//SP - satelite pulses
+		state = 99 + uniq_max_num;
+	}
+	else if(uniq_max_num > 1 && T0/av_max_dist <= 1.4 && T0/av_max_dist > 0.05)
+	{
+		//QS ML
+		state = 200 + uniq_max_num;
+	}
+	else if(uniq_max_num >= 1 && T0/av_max_dist < 0.05)
+	{
+		//QS
+		state = 1001;
+	}
+	else if(uniq_max_num >= 15 && T0/av_max_dist > 1.5)
+	{
+		//QP - chaotic
+		state = 400 + uniq_max_num;
+	}
+	else
+	{
+		//error
+		state =  -1;
 	}
 }
 
@@ -574,7 +629,7 @@ bool ts_evaluation::is_approx(double x, double y, string opt, double val)
 	{
 		con = (x >= y*(1-val) && x <= y*(1+val));
 	}
-	
+
 	return con;
 }
 

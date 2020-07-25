@@ -306,7 +306,7 @@ tuple<timeseries,ts_evaluation> integrator::integrate_analysis(string opt)
 	{
 		EV.FindUniqMax();
 		EV.FindPeriod();
-
+		EV.FindState();
 	}
 	
 	

@@ -71,7 +71,8 @@ public:
 	std::vector<double>* t_ptr;
 	long len;
 	
-	double average, period;
+	int state, uniq_max_num;
+	double av_max_dist, average, period;
 	double GlobalSupr, GlobalInfi;
 	double t_offset, dt;
 	std::vector<double> MaxPos;
@@ -89,6 +90,7 @@ public:
 	
 	void FindUniqMax();
 	void FindPeriod();
+	void FindState();
 	
 	double InterpolQuadExtrPos(double, double, double, double, double, double);
 	double InterpolQuadExtrVal(double, double, double, double, double, double, double);

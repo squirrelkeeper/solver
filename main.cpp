@@ -107,14 +107,14 @@ int main(int argc, char* argv[])
 				
 				cout << AP.LP.Jg.par_dbl << '\t';
 				cout << AP.LP.q0.par_dbl << '\t';
-				cout << get<1>(hom_TS_EV).UniqMaxVal.size() << '\t';
+				cout << get<1>(hom_TS_EV).state << '\t';
 				cout << '\n';
 				
 				
 				
 				out_sweep << AP.LP.Jg.par_dbl << '\t';
 				out_sweep << AP.LP.q0.par_dbl << '\t';
-				out_sweep << get<1>(hom_TS_EV).UniqMaxVal.size() << '\t';
+				out_sweep << get<1>(hom_TS_EV).state << '\t';
 				out_sweep << '\n';
 				
 				break;
