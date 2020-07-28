@@ -56,7 +56,9 @@ int main(int argc, char* argv[])
 //	AP.IP.D.par_dbl = 0.2;
 
 	
-	string mode = "ts";
+//	string mode = "ts";
+//	string mode = "sweep";
+	string mode = "ts_noise";
 
 	if(mode == "ts")
 	{
@@ -66,10 +68,59 @@ int main(int argc, char* argv[])
 		
 		get<0>(hom_TS_EV).write_file("test_hom");
 	}
+
+	if(mode == "ts_noise")
+	{
+		integrator hom_IN(AP);
+		hom_IN.initialize(hom_IC);
+		
+ 		tuple<timeseries, pp_evaluation> hom_TS_PP = hom_IN.integrate_noise_analysis("simple");
+
+		cout << get<1>(hom_TS_PP).GlobalSupr << endl;
+		cout << get<1>(hom_TS_PP).GlobalInfi << endl;
+		cout << get<1>(hom_TS_PP).average << endl;
+		cout << get<1>(hom_TS_PP).pulse_list_len << endl;
+		
+/*
+		for(long i = 0; i < get<1>(hom_TS_PP).pulse_list_len; i++)
+		{
+			
+			cout << get<1>(hom_TS_PP).pulse_list[i].max_pos << '\t';
+			cout << get<1>(hom_TS_PP).pulse_list[i].max_val << '\t';
+			cout << endl;
+		}
+*/
+
+
+/*
+		for(long i = 1; i < get<1>(hom_TS_PP).pulse_list_len; i++)
+		{
+			
+			cout << get<1>(hom_TS_PP).pulse_list[i].max_pos-get<1>(hom_TS_PP).pulse_list[i-1].max_pos << '\t';
+			cout << endl;
+		}
+*/
+
+
+		for(long i = 0; i < get<1>(hom_TS_PP).pulse_list_len; i++)
+		{
+			
+			cout << get<1>(hom_TS_PP).pulse_list[i].left_pos << '\t';
+			cout << get<1>(hom_TS_PP).pulse_list[i].right_pos << '\t';
+			cout << get<1>(hom_TS_PP).pulse_list[i].del << '\t';
+			cout << endl;
+		}
+
+
+		get<0>(hom_TS_PP).write_file("test_hom");
+	}
+	
+	
+	
 	
 	if(mode == "sweep")
 	{
-		int pts = 10;
+		int pts = 100;
 		
 		double Jg_start = 0.1;
 		double Jg_stop = 12.0;
@@ -86,7 +137,7 @@ int main(int argc, char* argv[])
 		
 
 		ofstream out_sweep;
-		out_sweep.open("out_sweep.swp.dat");
+		out_sweep.open("data/out_sweep.swp.dat");
 		
 		for(int i = 0; i < pts; i++)
 		{
@@ -123,6 +174,10 @@ int main(int argc, char* argv[])
 		
 		out_sweep.close();
 	}
+	
+
+	
+	
 
 //	AP.IP.int_time.par_dbl = 100;
 //	AP.IP.out_time.par_dbl = 10;

@@ -102,8 +102,9 @@ public:
 	std::tuple<timeseries,ts_evaluation> integrate_analysis(std::string);
 
 	timeseries integrate_noise();
-	double get_period();
-
+	std::tuple<timeseries, pp_evaluation> integrate_noise_analysis(std::string);
+	
+	
 	
 	timeseries integrate_ret(timeseries);
 	timeseries integrate_adj(timeseries);

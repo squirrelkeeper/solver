@@ -193,8 +193,6 @@ timeseries integrator::integrate()
 tuple<timeseries,ts_evaluation> integrator::integrate_analysis(string opt)
 {
 	timeseries TS(AP);
-	ts_evaluation EV(&TS, AP);
-
 
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
@@ -233,6 +231,9 @@ tuple<timeseries,ts_evaluation> integrator::integrate_analysis(string opt)
 		pos2 = (pos2+1) % dim2;
 		pos1 = (pos1+1) % dim2;
 	}
+	
+	ts_evaluation EV(&TS, AP);
+
 	
 	for(long i=0; i < TS.len; i++)
 	{
@@ -300,7 +301,7 @@ tuple<timeseries,ts_evaluation> integrator::integrate_analysis(string opt)
 		
 	}
 	
-	EV.average = sum / (TS.len-2);
+	EV.average = sum / (TS.len * 1.0);
 	
 	if(opt == "full")
 	{
@@ -337,7 +338,7 @@ double integrator::InterpolQuadExtrVal(double a, double b, double c, double fa, 
 timeseries integrator::integrate_noise()
 {
 	timeseries TS(AP);
-	
+
 	random_device true_rnd; 
 	TS.seed = true_rnd();
 	mt19937 rnd_gen(TS.seed); 
@@ -412,38 +413,36 @@ timeseries integrator::integrate_noise()
 		TS.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
 	}
 
-	
 	return TS;
 }
 
 
 
-double integrator::get_period()
+
+tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt)
 {
-	double period = 0;
+	timeseries TS(AP);
 	
-	long N = 10*dim2;
-	double tri[3] {0,0,0};
-
-	vector<double> maxima_I = {};
-	vector<double> maxima_t = {};
+	random_device true_rnd; 
+	TS.seed = true_rnd();
+	mt19937 rnd_gen(TS.seed); 
+	normal_distribution<double> rnd_distr(0,1); 
 	
-	vector<double> unique_maxima_I = {};
-	vector<double> unique_maxima_t = {};
-	vector<double> unique_maxima_dist = {};	
 	
-	double maxima_variation = 0.01;
-	
-
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
-	
+
+
 	lpar_dbl_set *lp = new lpar_dbl_set(AP);
 	fpar_dbl_set *fp = new fpar_dbl_set(AP);
 	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 	
-	for(long i=0; i < N; i++)
+	double sum = 0.0;
+	double I;
+	
+
+	for(long i=0; i < it-TS.len; i++)
 	{
 		
 		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
@@ -454,27 +453,9 @@ double integrator::get_period()
 		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
 		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
 		
-
-		tri[i%3] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+		Xnew.ER+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
 		
-		if(i>1 && tri[i%3] < tri[(i+2)%3] && tri[(i+1)%3] < tri[(i+2)%3])
-		{
-/*
-			cout << Time << '\t';
-			cout << tri[i%3] << '\t';
-			cout << tri[(i+2)%3] << '\t';
-			cout << tri[(i+1)%3] << '\t';
-			cout << endl;
-*/
-			
-			double a2 = 0.5*(tri[i%3] + tri[(i+1)%3]);
-			double a1 = 0.5*(tri[i%3] - tri[(i+1)%3]);
-			double a0 = tri[(i+2)%3];
-			
-			maxima_I.push_back(a0 - a1*a1/(4.0*a2));
-			maxima_t.push_back(Time+ip->dt*(-0.5*a1*a2));
-			
-		}
 		
 		X[pos2].ER = Xnew.ER;
 		X[pos2].EI = Xnew.EI;
@@ -482,45 +463,70 @@ double integrator::get_period()
 		X[pos2].Q = Xnew.Q;
 		X[pos2].J = Xnew.J;
 		Time += ip->dt;
-
-
 		
 		pos0 = pos2;
 		pos2 = (pos2+1) % dim2;
 		pos1 = (pos1+1) % dim2;
 	}
 	
-	auto max_it = max_element(maxima_I.begin(), maxima_I.end());
-	double abs_max = maxima_I[distance(maxima_I.begin(), max_it)];
+	pp_evaluation PP(&TS, AP);	
 	
-	
-	for(unsigned int i = 0; i < maxima_t.size(); i++)
+	for(long i=0; i < TS.len; i++)
 	{
-		if(maxima_I[i] >= abs_max - abs_max * maxima_variation)
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		Xnew.ER+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		I = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	
+		TS.X[i] = Xnew;
+		TS.t[i] = Time;
+		TS.I[i] = I;
+		
+		sum += I;
+		
+		if(I > PP.GlobalSupr)
 		{
-			unique_maxima_t.push_back(maxima_t[i]);
-			unique_maxima_I.push_back(maxima_I[i]);
+			PP.GlobalSupr = I;
+		}
+		
+		if(I < PP.GlobalInfi)
+		{
+			PP.GlobalInfi = I;
 		}
 	}
 	
-	for(unsigned int i = 0; i < unique_maxima_t.size()-1; i++)
+	PP.average = sum/(TS.len * 1.0);
+	
+		
+	if(opt == "simple")
 	{
-		unique_maxima_dist.push_back(unique_maxima_t[i+1]-unique_maxima_t[i]);
+		PP.DetectPulses_simple();
 	}
 	
-	for(unsigned int i = 0; i < unique_maxima_dist.size(); i++)
-	{
-		period += unique_maxima_dist[i];
-	}
-
-	period /= (double)(unique_maxima_dist.size());
 	
-	
-	return period;
+	tuple<timeseries, pp_evaluation> OUT = make_tuple(TS, PP);
+	return OUT;
 }
-
-
-
 
 
 

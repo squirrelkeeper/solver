@@ -10,15 +10,27 @@ public:
 	long trig_pos;
 	long right_pos;
 	long left_pos;
+	long max_pos;
+	
+	double right_val;
+	double left_val;
+	double max_val;
+	
 	
 	double baseline;
-	double max;
+
 	double pos;
 	double width;
+	double fwhm;
+	double area;
+
 	
 	bool del;
 	
+	
 	pulse();
+	pulse(long);
+	
 	void reset();
 };
 
@@ -98,7 +110,50 @@ public:
 	bool is_approx(double, double, std::string, double);
 };
 
+class pp_evaluation
+{
+public:
+// Tolerances
 
+
+
+	allpar_set AP;
+	std::vector<double>* I_ptr;
+	std::vector<double>* t_ptr;
+	long len;
+	
+	double average;
+	double GlobalSupr, GlobalInfi;
+	double t_offset, dt;
+
+	std::vector<pulse> pulse_list;
+	int pulse_list_len;
+
+
+	pp_evaluation(std::vector<double>*, std::vector<double>*, allpar_set);
+	pp_evaluation(timeseries*, allpar_set);
+	
+	
+	void FindGlobalExtrAvrg();
+	
+	void DetectPulses_simple();
+	void DetectPulses_MWA();
+	void DetectPulses_MWC();
+	
+	void FindPos();
+	void FindProps();
+	void FindProps(std::string);
+	
+	
+	std::vector<pulse> PurgeList(std::vector<pulse>);
+	
+	
+	std::vector<double> GetPulseDist();
+	
+//	void FindUniqMax();
+//	void FindPeriod();
+//	void FindState();
+};
 
 
 
