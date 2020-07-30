@@ -572,15 +572,7 @@ void pp_evaluation::DetectPulses_simple()
 	
 	bool triggered = false;
 	int curr_pulse = -1;
-	
-//	AbsTrigThres += 3;
-
-	
-	cout << "AbsTrigThres: " << AbsTrigThres << endl;
-	cout << "AbsResetThres: " << AbsResetThres << endl;
-	
-	int cout_counter = 0;
-	
+		
 	for(long i = 0; i < len; i++)
 	{
 		if(!triggered && (*I_ptr)[i] >= AbsTrigThres)
@@ -591,9 +583,6 @@ void pp_evaluation::DetectPulses_simple()
 			pulse_list.push_back(P);
 			pulse_list_len++;
 			curr_pulse++;
-
-			
-			cout_counter++;
 		}
 
 		if(triggered)
@@ -637,8 +626,233 @@ void pp_evaluation::DetectPulses_simple()
 	}
 	
 	pulse_list = PurgeList(pulse_list);
+	pulse_list_len = pulse_list.size();
 	
 }
+
+
+
+void pp_evaluation::DetectPulses_MWA()
+{
+	double RelTrigThres =  0.2;
+	double AbsTrigThres = RelTrigThres * GlobalSupr + 1.1 * AP.IP.D.par_dbl;
+	
+	double AbsResetThres;
+	
+	if(RelTrigThres * GlobalSupr < average)
+	{
+		AbsResetThres = RelTrigThres * GlobalSupr;
+	}
+	else if(RelTrigThres * GlobalSupr >= average)
+	{
+		AbsResetThres = average;
+	}
+	
+	
+	bool triggered = false;
+	int curr_pulse = -1;
+	long u = (long)(1.0/(100.0 * dt));	
+	
+	for(long i = u; i < len; i++)
+	{
+		double mwa = 0.0;
+		
+		for(long j = i - u; j < i + u; j++)
+		{
+			mwa += (*I_ptr)[j];
+		}
+		
+		mwa /= 2.0*u;
+		
+		if(!triggered && mwa >= AbsTrigThres)
+		{
+			triggered = true;
+
+			pulse P(i);
+			pulse_list.push_back(P);
+			pulse_list_len++;
+			curr_pulse++;
+		}
+
+		if(triggered)
+		{			
+			if((*I_ptr)[i] >= pulse_list[curr_pulse].max_val)
+			{
+				pulse_list[curr_pulse].max_pos = i;
+				pulse_list[curr_pulse].max_val = (*I_ptr)[i];
+			}
+		}
+		
+		if(triggered && (*I_ptr)[i] < AbsResetThres)
+		{
+			triggered = false;
+			
+			pulse_list[curr_pulse].right_pos = i;
+			pulse_list[curr_pulse].right_val = (*I_ptr)[i];
+			
+			
+			for(long j = pulse_list[curr_pulse].trig_pos; j >= 0; j--)
+			{	if((*I_ptr)[j] <= AbsResetThres)
+				{
+					pulse_list[curr_pulse].left_pos = j;
+					pulse_list[curr_pulse].left_val = (*I_ptr)[j];
+					break;
+				}
+				else if(j == 0)
+				{
+					pulse_list[curr_pulse].del = true;
+					break;
+				}
+				
+				
+			}
+		}
+	}
+	
+	if(triggered)
+	{
+		pulse_list[curr_pulse].del = true;
+	}
+	
+	pulse_list = PurgeList(pulse_list);
+	pulse_list_len = pulse_list.size();
+}
+
+
+void pp_evaluation::DetectPulses_MWC()
+{
+	double RelTrigThres =  0.2;
+	double AbsTrigThres = RelTrigThres * GlobalSupr + 1.1 * AP.IP.D.par_dbl;
+	
+	double AbsResetThres;
+	
+	if(RelTrigThres * GlobalSupr < average)
+	{
+		AbsResetThres = RelTrigThres * GlobalSupr;
+	}
+	else if(RelTrigThres * GlobalSupr >= average)
+	{
+		AbsResetThres = average;
+	}
+	
+	
+	bool triggered = false;
+	int curr_pulse = -1;
+	long u = (long)(1.0/(100.0 * dt));	
+	
+	for(long i = u; i < len; i++)
+	{
+		double mwc1 = 0.0;
+		double mwc2 = 0.0;
+		
+		
+		for(long j = i - u; j < i + u; j++)
+		{
+			mwc1 += (*I_ptr)[j];
+		}
+		
+		mwc1 /= 2.0*u;
+		
+		for(long j = i - u; j < i + u; j++)
+		{
+			mwc2 += ( (*I_ptr)[j] - mwc1 ) * ( (*I_ptr)[j] - mwc1 );
+		}
+		
+		mwc2 /= 2.0*u;
+		
+		if(!triggered && abs(mwc1 * mwc2) >= AbsTrigThres)
+		{
+			triggered = true;
+
+			pulse P(i);
+			pulse_list.push_back(P);
+			pulse_list_len++;
+			curr_pulse++;
+		}
+
+		if(triggered)
+		{			
+			if((*I_ptr)[i] >= pulse_list[curr_pulse].max_val)
+			{
+				pulse_list[curr_pulse].max_pos = i;
+				pulse_list[curr_pulse].max_val = (*I_ptr)[i];
+			}
+		}
+		
+		if(triggered && (*I_ptr)[i] < AbsResetThres)
+		{
+			triggered = false;
+			
+			pulse_list[curr_pulse].right_pos = i;
+			pulse_list[curr_pulse].right_val = (*I_ptr)[i];
+			
+			
+			for(long j = pulse_list[curr_pulse].trig_pos; j >= 0; j--)
+			{	if((*I_ptr)[j] <= AbsResetThres)
+				{
+					pulse_list[curr_pulse].left_pos = j;
+					pulse_list[curr_pulse].left_val = (*I_ptr)[j];
+					break;
+				}
+				else if(j == 0)
+				{
+					pulse_list[curr_pulse].del = true;
+					break;
+				}
+				
+				
+			}
+		}
+	}
+	
+	if(triggered)
+	{
+		pulse_list[curr_pulse].del = true;
+	}
+	
+	pulse_list = PurgeList(pulse_list);
+	pulse_list_len = pulse_list.size();
+}
+
+
+
+void pp_evaluation::FilterSamePos()
+{
+	for(int i = 1; i < pulse_list_len; i++)
+	{
+		bool con1 = (pulse_list[i].trig_pos == pulse_list[i-1].trig_pos);
+		bool con2 = (pulse_list[i].left_pos == pulse_list[i-1].left_pos);
+		bool con3 = (pulse_list[i].right_pos == pulse_list[i-1].right_pos);
+		bool con4 = (pulse_list[i].max_pos == pulse_list[i-1].max_pos);
+		
+		
+		if(con1 || con2 || con3 || con4)
+		{
+			pulse_list[i].del = true;
+		}
+	}
+	
+	pulse_list = PurgeList(pulse_list);
+}
+
+
+void pp_evaluation::FilterTooClose()
+{
+	for(int i = 1; i < pulse_list_len; i++)
+	{
+		bool con1 = ((pulse_list[i].max_pos - pulse_list[i-1].max_pos) < 0.2);
+		
+		if(con1)
+		{
+			pulse_list[i].del = true;
+		}
+	}
+	
+	pulse_list = PurgeList(pulse_list);
+	pulse_list_len = pulse_list.size();
+}
+
+
 
 
 void pp_evaluation::FindPos()
@@ -699,34 +913,52 @@ void pp_evaluation::FindProps(string opt)
 		{
 			long u = (long)(1.0/(100.0 * dt));
 			
-			for(long j = pulse_list[i].max_pos; j < pulse_list[i].right_pos; j++)
+			double fwhm_left = 0.0;
+			double fwhm_right = 0.0;
+			
+			
+			for(long j = pulse_list[i].max_pos; j < pulse_list[i].right_pos - u; j++)
 			{
-				for(long k = ; j < pulse_list[i].right_pos; j++)
+				double mwa = 0.0;
 				
+				for(long k = j-u; j < j+u; k++)
+				{
+					mwa += (*I_ptr)[k];
+				}
 				
+				mwa /= 2.0*u;
+				
+				if(mwa < 0.5 * pulse_list[i].max_val)
+				{
+					fwhm_right = (*t_ptr)[j];
+				}
 			}
 			
+			for(long j = pulse_list[i].max_pos; j > pulse_list[i].left_pos + u; j--)
+			{				
+				double mwa = 0.0;
+				
+				for(long k = j-u; j < j+u; k++)
+				{
+					mwa += (*I_ptr)[k];
+				}
+				
+				mwa /= 2.0*u;
+				
+				if(mwa < 0.5 * pulse_list[i].max_val)
+				{
+					fwhm_left = (*t_ptr)[j];
+				}
+			}
 			
-			
-			
-			
+			if(fwhm_right != 0 && fwhm_left != 0)
+			{
+				pulse_list[i].fwhm = fwhm_right - fwhm_left;
+			}
 			
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -763,7 +995,7 @@ vector<double> pp_evaluation::GetPulseDist()
 	
 	for(int i = 0; i < pulse_list_len-1; i++)
 	{
-		out[i] = pulse_list[i+1] -  pulse_list[i];
+		out[i] = pulse_list[i+1].pos - pulse_list[i].pos;
 	}
 	
 	return out;

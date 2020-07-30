@@ -22,7 +22,7 @@
 #include "timeseries.hpp"
 
 #include "integrate.hpp"
-#include "sweep.hpp"
+#include "scan.hpp"
 
 
 
@@ -34,32 +34,86 @@ int main(int argc, char* argv[])
 {
 	timer time_total;
 
-
 	allpar_set AP("JAU15", "TAU1", "quick");
 	AP.check_cmd_line(argc, argv);
 
 	vector<double> hom_const_IC = {0.4, 0.0, 4.0, 1.0, 1.0};
-	
-//	vector<double> adj1_const_IC = {2.0, 0.0, 1.0, 1.0, 1.0};
-//	vector<double> adj2_const_IC = {0.0, 1.0, 0.0, 0.0, 0.0};
-	
-	
+
 	
 	initial_con hom_IC("const", hom_const_IC, AP);
 //	initial_con adj1_IC("const", adj1_const_IC, AP);
 //	initial_con adj2_IC("const", adj2_const_IC, AP);
 
 	
-	AP.IP.int_time.par_dbl = 1000;
-	AP.IP.out_time.par_dbl = 100;
-	
 //	AP.IP.D.par_dbl = 0.2;
 
 	
 //	string mode = "ts";
 //	string mode = "sweep";
-	string mode = "ts_noise";
+//	string mode = "ts_noise";
+	string mode = "pp_noise";
+	
+	
+	if(mode == "pp_noise")
+	{
+		AP.IP.int_time.par_dbl = 5000;
+		AP.IP.out_time.par_dbl = AP.larger_delay();
+		
+		integrator init_IN(AP);
+		
+		init_IN.initialize(hom_IC);
+		
+		timeseries init_TS = init_IN.integrate_noise();
+		
+		
+		AP.IP.int_time.par_dbl = 500;
+		AP.IP.out_time.par_dbl = 100;
+		
+		int r = (int)(AP.IP.rea.par_dbl);
 
+		string ofile_name = "testscan_g";
+		ofile_name += to_string(AP.LP.g.par_dbl);
+		ofile_name += "_Jg";
+		ofile_name += to_string(AP.LP.Jg.par_dbl);	
+		ofile_name += ".sc.dat";
+
+		
+		
+		ofstream ofile;
+		ofile.open(ofile_name);
+		
+		ofile << "#g=" << AP.LP.g.par_dbl << endl;
+		ofile << "#Jg=" << AP.LP.Jg.par_dbl << endl;
+		ofile << "#r" << '\t' << "pp" << endl;
+		
+		
+		for(int i = 0; i < r; i++)
+		{
+			integrator IN(AP);
+			IN.initialize(init_TS);
+			
+			tuple<timeseries, pp_evaluation> TS_PP = IN.integrate_noise_analysis("simple");
+			
+//			get<0>(TS_PP).write_file("test_hom");
+			
+			vector<double> ppos = get<1>(TS_PP).GetPulseDist();
+			
+			for(unsigned j = 0; j < ppos.size(); j++)
+			{
+				ofile << i << '\t';
+				ofile << ppos[j] << '\t';
+				ofile << endl;
+			}
+		}
+		
+		ofile.close();
+		
+//		init_TS.write_file("test_hom");
+	}
+	
+	
+	
+	
 	if(mode == "ts")
 	{
 		integrator hom_IN(AP);

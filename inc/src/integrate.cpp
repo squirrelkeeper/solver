@@ -521,6 +521,11 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 	if(opt == "simple")
 	{
 		PP.DetectPulses_simple();
+		
+		PP.FilterSamePos();
+		PP.FilterTooClose();
+		
+		PP.FindPos();
 	}
 	
 	

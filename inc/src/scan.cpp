@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "../hdr/sweep.hpp"
+#include "../hdr/scan.hpp"
 
 
 using namespace std;

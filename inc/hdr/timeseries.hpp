@@ -140,6 +140,10 @@ public:
 	void DetectPulses_MWA();
 	void DetectPulses_MWC();
 	
+	void FilterSamePos();
+	void FilterTooClose();
+	void FilterTooSmallArea();
+	
 	void FindPos();
 	void FindProps();
 	void FindProps(std::string);
