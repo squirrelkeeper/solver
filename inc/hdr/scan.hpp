@@ -14,11 +14,17 @@ public:
 	par *ptr_scan_par2;
 	
 	allpar_set AP;
-	initial_con IC;
-	integrator IN;
-	timeseries TS;
 	
-	scan(int argc, char* argv[]);
+	int res_col;
+	std::vector<double> result;
+	
+	scan(
+		std::string,
+		std::string,
+		std::string,
+		std::vector<double>,
+		allpar_set AP_init
+	);
 };
 
 

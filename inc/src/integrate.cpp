@@ -309,6 +309,10 @@ tuple<timeseries,ts_evaluation> integrator::integrate_analysis(string opt)
 		EV.FindPeriod();
 		EV.FindState();
 	}
+	else if(opt == "period")
+	{
+		EV.FindPeriod();
+	}
 	
 	
 	tuple<timeseries, ts_evaluation> OUT = make_tuple(TS, EV);
@@ -326,6 +330,166 @@ double integrator::InterpolQuadExtrPos(double a, double b, double c, double fa, 
 double integrator::InterpolQuadExtrVal(double a, double b, double c, double fa, double fb, double fc, double tmax)
 {
 	return (fa*(b - c)*(b - tmax)*(c - tmax) - fb*(a - c)*(a - tmax)*(c - tmax) + fc*(a - b)*(a - tmax)*(b - tmax))/((a - b)*(a - c)*(b - c));
+}
+
+
+
+tuple<
+	timeseries,
+	timeseries,
+	timeseries,
+	ts_evaluation
+> integrator::integrate_neutral_modes_analysis(string opt)
+{
+	timeseries TS(AP);
+	timeseries NM1(AP);
+	timeseries NM2(AP);
+
+
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+
+
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
+	
+	double I3[3] = {0,0,0}; 
+	double sum = 0;
+	
+	
+	
+	for(long i=0; i < it-TS.len; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	}
+	
+	ts_evaluation EV(&TS, AP);
+
+	
+	for(long i=0; i < TS.len; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		Time += ip->dt;
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	
+		I3[i%3] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+		
+		TS.X[i] = Xnew;
+		TS.t[i] = Time;
+		TS.I[i] = I3[i%3];
+		
+		NM1.X[i] = dX;
+		NM1.t[i] = Time;
+		NM1.I[i] = dX.ER * dX.ER + dX.EI * dX.EI;
+		
+		NM2.X[i].ER = -Xnew.EI;
+		NM2.X[i].EI =  Xnew.ER;
+		NM2.X[i].G =  0;
+		NM2.X[i].Q =  0;
+		NM2.X[i].J =  0;
+		
+		NM2.t[i] = Time;
+		NM2.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+		
+		
+		
+		sum += I3[i%3];
+		
+		if(EV.GlobalSupr < I3[i%3])
+		{
+			EV.GlobalSupr = I3[i%3];
+		}
+		
+		if(EV.GlobalInfi > I3[i%3])
+		{
+			EV.GlobalInfi = I3[i%3];
+		}
+		
+		if(i>1 && I3[(i-2)%3] < (1.0-EV.ExtrTol) * I3[(i-1)%3] && (1.0-EV.ExtrTol) * I3[(i-1)%3] > I3[i%3])
+		{
+			double tmax = InterpolQuadExtrPos(
+				Time - 2*ip->dt,
+				Time - ip->dt,
+				Time,
+				I3[(i-2)%3],
+				I3[(i-1)%3],
+				I3[i%3]
+			);
+			double Imax = InterpolQuadExtrVal(
+				Time - 2*ip->dt,
+				Time - ip->dt,
+				Time,
+				I3[(i-2)%3],
+				I3[(i-1)%3],
+				I3[i%3],
+				tmax
+			);
+			
+			EV.MaxPos.push_back(tmax);
+			EV.MaxVal.push_back(Imax);
+		}
+		
+	}
+	
+	EV.average = sum / (TS.len * 1.0);
+	
+	if(opt == "full")
+	{
+		EV.FindUniqMax();
+		EV.FindPeriod();
+		EV.FindState();
+	}
+	else if(opt == "period")
+	{
+		EV.FindPeriod();
+	}
+	
+	
+	tuple<
+		timeseries,
+		timeseries,
+		timeseries,
+		ts_evaluation
+		> OUT = make_tuple(TS, NM1, NM2, EV);
+		
+	return OUT;
 }
 
 

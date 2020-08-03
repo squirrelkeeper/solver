@@ -100,7 +100,9 @@ public:
 	
 	timeseries integrate();
 	std::tuple<timeseries,ts_evaluation> integrate_analysis(std::string);
-
+	std::tuple<timeseries,timeseries,timeseries,ts_evaluation> integrate_neutral_modes_analysis(std::string);
+	
+	
 	timeseries integrate_noise();
 	std::tuple<timeseries, pp_evaluation> integrate_noise_analysis(std::string);
 	

@@ -266,6 +266,37 @@ vector<par> allpar_set::collect()
 	return vecLP;
 }
 
+vector<par*> allpar_set::collect_ptr()
+{
+	vector<par*> collection;
+	
+	collection.push_back(&LP.ag);
+	collection.push_back(&LP.aq);
+	collection.push_back(&LP.Jg);
+	collection.push_back(&LP.q0);
+	collection.push_back(&LP.rs);
+	collection.push_back(&LP.g);
+	collection.push_back(&LP.gg);
+	collection.push_back(&LP.gq);
+	collection.push_back(&LP.sqrtkap);
+	collection.push_back(&LP.dw);
+	collection.push_back(&LP.T);
+	
+	collection.push_back(&FP.K);
+	collection.push_back(&FP.tau);
+	collection.push_back(&FP.wLP);
+	
+	collection.push_back(&IP.int_time);
+	collection.push_back(&IP.out_time);
+	collection.push_back(&IP.dt);
+	collection.push_back(&IP.sqrtdt);
+	collection.push_back(&IP.D);
+	
+	
+
+	return collection;
+}
+
 void allpar_set::cout_pars(vector<par> collection)
 {
 	for(unsigned int i = 0; i < collection.size(); i++)

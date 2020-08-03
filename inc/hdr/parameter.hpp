@@ -97,6 +97,7 @@ public:
 
 	
 	std::vector<par> collect();
+	std::vector<par*> collect_ptr();
 	void cout_pars(std::vector<par> collection);
 	
 	void check_cmd_line(int argc, char* argv[]);

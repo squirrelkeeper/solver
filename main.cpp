@@ -54,6 +54,9 @@ int main(int argc, char* argv[])
 	string mode = "pp_noise";
 	
 	
+//	scan semianalytic_timing_jitter();
+	
+	
 	if(mode == "pp_noise")
 	{
 		AP.IP.int_time.par_dbl = 5000;
