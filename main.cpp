@@ -51,10 +51,20 @@ int main(int argc, char* argv[])
 //	string mode = "ts";
 //	string mode = "sweep";
 //	string mode = "ts_noise";
-	string mode = "pp_noise";
-	
+//	string mode = "pp_noise";
+	string mode = "satj_scan";
+
 	
 //	scan semianalytic_timing_jitter();
+	
+	if(mode == "satj_scan")
+	{
+		vector<double> scope = {66.5, 80.0, 5.0};
+		
+		scan SC("semianalytic_tj", "g", "Jg", scope, AP);
+	}
+	
+	
 	
 	
 	if(mode == "pp_noise")

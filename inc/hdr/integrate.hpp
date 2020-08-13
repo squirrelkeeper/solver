@@ -97,6 +97,8 @@ public:
 	integrator(allpar_set);
 	
 	void initialize(initial_con IC);
+	void initialize(std::string opt);
+
 	
 	timeseries integrate();
 	std::tuple<timeseries,ts_evaluation> integrate_analysis(std::string);
@@ -105,16 +107,17 @@ public:
 	
 	timeseries integrate_noise();
 	std::tuple<timeseries, pp_evaluation> integrate_noise_analysis(std::string);
+
+	timeseries integrate_adj(timeseries);
+	double bilinear_prod(timeseries, timeseries, timeseries);
 	
 	
 	
 	timeseries integrate_ret(timeseries);
-	timeseries integrate_adj(timeseries);
 	
 	std::vector<timeseries> integrate_get_neutral_modes();
 
 	double bilinear_one_step(timeseries, timeseries, timeseries);
-	std::vector<double> bilinear_prod(double, timeseries, timeseries, timeseries);
 
 	var derive_real(var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);
 	var derive_ret(var&, var&, var&, var&, var&, var&, lpar_dbl_set*, fpar_dbl_set*);

@@ -119,6 +119,26 @@ void integrator::initialize(initial_con IC)
 }
 
 
+void integrator::initialize(string opt)
+{
+	lpar_dbl_set lp(AP);
+	fpar_dbl_set fp(AP);
+	ipar_dbl_set ip(AP);
+	
+	if(opt == "bil")
+	{
+		double tauL = AP.larger_delay();
+		
+		dim1 = (long)(floor(lp.T / ip.dt));
+		dim2 = (long)(floor(fp.tau / ip.dt));
+
+		long dimL = (long)(floor(tauL / ip.dt));
+		
+		pos0 = 2*dimL;
+	}
+}
+
+
 timeseries integrator::integrate()
 {
 	timeseries TS(AP);
@@ -421,9 +441,9 @@ tuple<
 		
 		NM2.X[i].ER = -Xnew.EI;
 		NM2.X[i].EI =  Xnew.ER;
-		NM2.X[i].G =  0;
-		NM2.X[i].Q =  0;
-		NM2.X[i].J =  0;
+		NM2.X[i].G =  0.0;
+		NM2.X[i].Q =  0.0;
+		NM2.X[i].J =  0.0;
 		
 		NM2.t[i] = Time;
 		NM2.I[i] = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
@@ -887,7 +907,7 @@ timeseries integrator::integrate_ret(timeseries hom)
 timeseries integrator::integrate_adj(timeseries hom)
 {
 	timeseries TS(AP);
-// 	
+
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
 	LOOKUP_COS_INIT();
@@ -896,7 +916,13 @@ timeseries integrator::integrate_adj(timeseries hom)
 	fpar_dbl_set *fp = new fpar_dbl_set(AP);
 	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 
-	long hpos0 = (long)((double)(hom.X.size())*0.5);
+	long hpos0 = hom.X.size()-1;
+	
+	if(hpos0+1 < (long)(AP.IP.int_time.par_dbl*AP.IP.dt.par_dbl))
+	{
+		cout << "err07" << endl;
+	}
+	
 	
 	for(long i=0; i < it-TS.len; i++)
 	{
@@ -983,6 +1009,7 @@ double integrator::bilinear_one_step(timeseries hom, timeseries ret, timeseries 
 	
 	double bil;
 	
+	
 	bil = bilinear_step(hom.X, ret.X, adj.X, lp, fp);
 
 	
@@ -993,7 +1020,7 @@ double integrator::bilinear_one_step(timeseries hom, timeseries ret, timeseries 
 
 
 
-vector<double> integrator::bilinear_prod(double period, timeseries hom, timeseries ret, timeseries adj)
+double integrator::bilinear_prod(timeseries hom, timeseries ret, timeseries adj)
 {
 	LOOKUP_EXP_INIT();
 	LOOKUP_SIN_INIT();
@@ -1001,26 +1028,14 @@ vector<double> integrator::bilinear_prod(double period, timeseries hom, timeseri
 	
 	lpar_dbl_set *lp = new lpar_dbl_set(AP);
 	fpar_dbl_set *fp = new fpar_dbl_set(AP);
-	ipar_dbl_set *ip = new ipar_dbl_set(AP);
+//	ipar_dbl_set *ip = new ipar_dbl_set(AP);
 
-	long int_len = (long)((period)/ip->dt);
+//	pos0?
+//	dim1 / dim2?
+	
+	
+	double bil = bilinear_step(hom.X, ret.X, adj.X, lp, fp);
 
-	vector<double> bil(int_len, 0);
-	
-	
-	long store_pos0 = pos0;
-	
-	pos0 = (long)((AP.larger_delay())/ip->dt);
-	
-	for(long i = 0; i < int_len; i++)
-	{
-		bil[i] = bilinear_step(hom.X, ret.X, adj.X, lp, fp);
-//		cout << bil[i] << endl;
-		pos0++;
-	}
-	
-	
-	pos0 = store_pos0;
 	
 	return bil;
 }

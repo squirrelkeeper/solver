@@ -146,7 +146,7 @@ void timeseries::write_file(string file_name)
 	data << "G" << '\t';
 	data << "Q" << '\t';
 	data << "J" << '\t';
-	data << "I" << '\t';
+	data << "I";
 	data << endl;
 	
 	
@@ -161,7 +161,7 @@ void timeseries::write_file(string file_name)
 		data << X[i].G << '\t';
 		data << X[i].Q << '\t';
 		data << X[i].J << '\t';
-		data << I[i] << '\t';
+		data << I[i];
 
 		data << endl;
 	}

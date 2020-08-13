@@ -74,7 +74,7 @@ public:
 	double ExtrTol = 1e-16;
 	double MaxMinDscr = 1e-5;
 	double AverageThres = 1e-6;
-	double DblCountTol = 0.05;
+	double DblCountTol = 0.001;
 
 
 
