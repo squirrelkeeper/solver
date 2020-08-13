@@ -37,92 +37,148 @@ int main(int argc, char* argv[])
 	allpar_set AP("JAU15", "TAU1", "quick");
 	AP.check_cmd_line(argc, argv);
 
-	vector<double> hom_const_IC = {0.4, 0.0, 4.0, 1.0, 1.0};
+	icpar_set IC("std");
+	IC.check_cmd_line(argc, argv);
+	
+
 
 	
-	initial_con hom_IC("const", hom_const_IC, AP);
-//	initial_con adj1_IC("const", adj1_const_IC, AP);
-//	initial_con adj2_IC("const", adj2_const_IC, AP);
+	mode_cmd mode(argc, argv);
 
+	string file_name = "test.dat";
+	string first_line = "#\n";
 	
-//	AP.IP.D.par_dbl = 0.2;
-
+	par *par1_ptr;
+	par *par2_ptr;
+	int pts = 1;
+	double incr = 0.0;
 	
-//	string mode = "ts";
-//	string mode = "sweep";
-//	string mode = "ts_noise";
-//	string mode = "pp_noise";
-	string mode = "satj_scan";
-
-	
-//	scan semianalytic_timing_jitter();
-	
-	if(mode == "satj_scan")
+	if(mode.mode_str == "lscan")
 	{
-		vector<double> scope = {66.5, 80.0, 5.0};
+		par1_ptr = AP.get_par_ptr(mode.par1_str);
+		par2_ptr = AP.get_par_ptr(mode.par2_str);
+	
+	
+		(*par1_ptr).par_dbl = mode.par1_start;
 		
-		scan SC("semianalytic_tj", "g", "Jg", scope, AP);
+		pts = mode.par1_steps;
+		incr = (mode.par1_stop-mode.par1_start)/mode.par1_steps;
+		
+		file_name = "num_"
+		+ (*par2_ptr).par_str
+		+ "_"
+		+ to_string((*par2_ptr).par_dbl)
+		+ "_"
+		+(*par1_ptr).par_str
+		+ ".ls.dat";
+	
+		first_line = "#" 
+		+ (*par2_ptr).par_str 
+		+ '\t' 
+		+ (*par1_ptr).par_str 
+		+ '\t' 
+		+ "rea" 
+		+ '\t' 
+		+ "pnum" 
+		+ '\t' 
+		+ "pp" 
+		+ '\n';
 	}
 	
+	ofstream out;
+	out.open(file_name);
+	out << first_line;
+	
+	
+
 	
 	
 	
-	if(mode == "pp_noise")
+	if(mode.mode_str == "lscan")
 	{
-		AP.IP.int_time.par_dbl = 5000;
-		AP.IP.out_time.par_dbl = AP.larger_delay();
-		
-		integrator init_IN(AP);
-		
-		init_IN.initialize(hom_IC);
-		
-		timeseries init_TS = init_IN.integrate_noise();
-		
-		
-		AP.IP.int_time.par_dbl = 500;
-		AP.IP.out_time.par_dbl = 100;
-		
-		int r = (int)(AP.IP.rea.par_dbl);
-
-		string ofile_name = "testscan_g";
-		ofile_name += to_string(AP.LP.g.par_dbl);
-		ofile_name += "_Jg";
-		ofile_name += to_string(AP.LP.Jg.par_dbl);	
-		ofile_name += ".sc.dat";
-
-		
-		
-		ofstream ofile;
-		ofile.open(ofile_name);
-		
-		ofile << "#g=" << AP.LP.g.par_dbl << endl;
-		ofile << "#Jg=" << AP.LP.Jg.par_dbl << endl;
-		ofile << "#r" << '\t' << "pp" << endl;
-		
-		
-		for(int i = 0; i < r; i++)
+		for(int i1 = 0; i1 < pts; i1++)
 		{
-			integrator IN(AP);
-			IN.initialize(init_TS);
-			
-			tuple<timeseries, pp_evaluation> TS_PP = IN.integrate_noise_analysis("simple");
-			
-//			get<0>(TS_PP).write_file("test_hom");
-			
-			vector<double> ppos = get<1>(TS_PP).GetPulseDist();
-			
-			for(unsigned j = 0; j < ppos.size(); j++)
+			int realisations = (int)(AP.IP.rea.par_dbl);
+	
+			if(AP.FP.K.par_dbl == 0)
 			{
-				ofile << i << '\t';
-				ofile << ppos[j] << '\t';
-				ofile << endl;
+				IC.j_ic.par_dbl = 0.0;
 			}
+			
+			
+			vector<double> hom_const_IC = {
+				IC.er_ic.par_dbl,
+				IC.ei_ic.par_dbl,
+				IC.g_ic.par_dbl, 
+				IC.q_ic.par_dbl, 
+				IC.j_ic.par_dbl
+			};
+			
+			initial_con hom_IC("const", hom_const_IC, AP);
+			
+			allpar_set AP_first = AP;
+			
+			AP_first.IP.int_time.par_dbl = 5000 + AP_first.larger_delay() * 100;
+			AP_first.IP.out_time.par_dbl = AP_first.larger_delay();
+			
+			integrator init_IN(AP_first);
+			init_IN.initialize(hom_IC);
+		
+			timeseries init_TS = init_IN.integrate_noise();
+
+
+			
+			for(int i2 = 0; i2 < realisations; i2++)
+			{
+				initial_con hom_IC(init_TS);
+				
+				integrator hom_IN(AP);
+				hom_IN.initialize(hom_IC);
+				
+				tuple<timeseries, pp_evaluation> hom_TS_PP = hom_IN.integrate_noise_analysis("simple");
+				
+				for(long i3 = 1; i3 < get<1>(hom_TS_PP).pulse_list_len; i3++)
+				{
+					
+					out << (*par1_ptr).par_dbl << '\t';
+					out << (*par2_ptr).par_dbl << '\t';
+					out << i2 << '\t';
+					out << i3 << '\t';
+					out << setprecision(15);
+					out << get<1>(hom_TS_PP).pulse_list[i3].pos - get<1>(hom_TS_PP).pulse_list[i3-1].pos;
+					out << endl;
+				}
+				
+				
+				
+			}
+
+			(*par1_ptr).par_dbl += incr;
+			
 		}
-		
-		ofile.close();
-		
-//		init_TS.write_file("test_hom");
+	
 	}
+	
+	
+
+	
+	out.close();
+	
+	time_total.stop();
+	time_total.print_elaps();
+	
+	
+	return 0;
+}
+
+
+
+
+
+/*
+ * 
+ * 	
+
 	
 	
 	
@@ -168,7 +224,7 @@ int main(int argc, char* argv[])
 		}
 */
 
-
+/*
 		for(long i = 0; i < get<1>(hom_TS_PP).pulse_list_len; i++)
 		{
 			
@@ -301,18 +357,3 @@ int main(int argc, char* argv[])
 	
 //	get<0>(hom_TS_EV).write_file("test_hom");
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	time_total.stop();
-	time_total.print_elaps();
-	
-	
-	return 0;
-}
-

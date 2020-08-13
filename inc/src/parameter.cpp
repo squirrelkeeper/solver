@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <regex>
 
 
 #include "../hdr/parameter.hpp"
@@ -30,6 +31,7 @@ double par_cmd::get_dbl(const string &par_str, double dbl_default)
 {
 	string new_str = "-" + par_str;
 	char **itr = find(begin, end, new_str);
+
 	if (itr != end && ++itr != end)
 	{
 		char *b;
@@ -45,6 +47,50 @@ double par_cmd::get_dbl(const string &par_str, double dbl_default)
 	}
 	return dbl_default;
 }
+
+//###########################################
+
+mode_cmd::mode_cmd(int init_argc, char **init_argv)
+{
+	argc = init_argc;
+	argv = init_argv;
+	
+	
+	for(int i = 1; i < argc; i++)
+	{
+		cmd_line += argv[i];
+	}
+	
+	regex mode_rgx(R"(-m:(\w*))");
+	smatch mode_match;
+	
+	if(regex_search(cmd_line, mode_match, mode_rgx))
+	{
+		mode_str = mode_match[1];
+	}
+	
+	
+	if(mode_str == "lscan")
+	{
+		regex lscan_rgx(R"(lscan\[(.*?),(.*?),(.*?),(.*?),(.*?)\])");
+		smatch lscan_match;
+		
+		if(regex_search(cmd_line, lscan_match, lscan_rgx))
+		{
+		
+			par1_str = lscan_match[1];
+
+			par1_start = stod(lscan_match[2]);
+			par1_stop  = stod(lscan_match[3]);
+			par1_steps = stoi(lscan_match[4]);
+			
+			par2_str = lscan_match[5];
+		}
+		
+	}
+}
+
+
 
 //###########################################
 
@@ -82,7 +128,7 @@ lpar_set::lpar_set(string option)
 	}
 }
 
-std::vector<par> lpar_set::collect()
+vector<par> lpar_set::collect()
 {
 	vector<par> collection;
 	
@@ -120,19 +166,25 @@ fpar_set::fpar_set(string option)
 	{
 		this->K.par_dbl = 1.0;
 		this->tau.par_dbl = 2.0;
-		this->wLP.par_dbl = 2.0 * M_PI / 1.0;
+		this->wLP.par_dbl = 2.0 * M_PI;
 	}
 	else if(option == "TAU2")
 	{
 		this->K.par_dbl = 1.0;
 		this->tau.par_dbl = 3.0;
-		this->wLP.par_dbl = 2.0 * M_PI / 3.0;
+		this->wLP.par_dbl = 2.0 * M_PI;
 	}
 	else if(option == "TAU5")
 	{
 		this->K.par_dbl = 1.0;
 		this->tau.par_dbl = 6.0;
-		this->wLP.par_dbl = 2.0 * M_PI / 6.0;
+		this->wLP.par_dbl = 2.0 * M_PI;
+	}
+	else if(option == "NOFB")
+	{
+		this->K.par_dbl = 0.0;
+		this->tau.par_dbl = 1.0;
+		this->wLP.par_dbl = 2.0 * M_PI;
 	}
 	else if(option == "def")
 	{
@@ -143,7 +195,7 @@ fpar_set::fpar_set(string option)
 	}
 }
 
-std::vector<par> fpar_set::collect()
+vector<par> fpar_set::collect()
 {
 		vector<par> collection;
 		
@@ -176,6 +228,7 @@ ipar_set::ipar_set(string option)
 		this->dt.par_dbl = 1e-4;
 		this->sqrtdt.par_dbl = sqrt(1e-4);
 		this->D.par_dbl = 0.0;
+		this->rea.par_dbl = 1.0;
 	}
 	else if(option == "def")
 	{
@@ -184,6 +237,7 @@ ipar_set::ipar_set(string option)
 		this->dt.par_dbl = 1e-3;
 		this->sqrtdt.par_dbl = sqrt(1e-3);
 		this->D.par_dbl = 0.0;
+		this->rea.par_dbl = 1.0;
 	}
 	else if(option == "noise")
 	{
@@ -192,6 +246,15 @@ ipar_set::ipar_set(string option)
 		this->dt.par_dbl = 1e-4;
 		this->sqrtdt.par_dbl = sqrt(1e-4);
 		this->D.par_dbl = 0.2;
+		this->rea.par_dbl = 1.0;
+	}
+	else if(option == "lina")
+	{
+		this->int_time.par_dbl = 5e2;
+		this->out_time.par_dbl = 1e2;
+		this->dt.par_dbl = 1e-4;
+		this->sqrtdt.par_dbl = sqrt(1e-4);
+		this->D.par_dbl = 0.0;
 		this->rea.par_dbl = 1.0;
 	}
 	else
@@ -336,6 +399,32 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 	this->IP.rea.par_dbl = cmd.get_dbl(this->IP.rea.par_str, this->IP.rea.par_dbl);
 }
 
+par* allpar_set::get_par_ptr(std::string par_str)
+{
+	vector<par*> collection = this->collect_ptr();
+
+	
+	par out_par{-1.0, "err", "err"};
+	par* out_par_ptr = &out_par;
+	
+	for(unsigned i = 0; i < collection.size(); i++)
+	{
+		if((*collection[i]).par_str == par_str)
+		{
+			out_par_ptr = collection[i];
+		}
+	}
+	
+	if((*out_par_ptr).par_str == "err")
+	{
+		cout << "err08"<< endl;
+	}
+	
+	
+	return out_par_ptr;
+}
+
+
 double allpar_set::larger_delay()
 {
 	double T1 = this->LP.T.par_dbl;
@@ -350,6 +439,96 @@ double allpar_set::smaller_delay()
 	double T2 = this->FP.tau.par_dbl;
 	double min_tau = T1 > T2 ? T2 : T1; 
 	return min_tau;
+}
+
+//###########################################
+
+icpar_set::icpar_set(string option)
+{
+	if(option == "std")
+	{
+		er_ic.par_dbl = 0.4;
+		ei_ic.par_dbl = 0.0;
+		g_ic.par_dbl = 4.0;
+		q_ic.par_dbl = 1.0;
+		j_ic.par_dbl = 1.0;
+		
+		a1_ic.par_dbl = 2.0;
+		a2_ic.par_dbl = 0.0;
+		a3_ic.par_dbl = 1.0;
+		a4_ic.par_dbl = 1.0;
+		a5_ic.par_dbl = 1.0;
+		
+		b1_ic.par_dbl = 0.0;
+		b2_ic.par_dbl = 1.0;
+		b3_ic.par_dbl = 0.0;
+		b4_ic.par_dbl = 0.0;
+		b5_ic.par_dbl = 0.0;
+	}
+	else
+	{
+		cout << "err002" << endl;
+	}
+}
+
+vector<par> icpar_set::collect()
+{
+	vector<par> collection;
+	
+	collection.push_back(this->er_ic);
+	collection.push_back(this->ei_ic);
+	collection.push_back(this->g_ic);
+	collection.push_back(this->q_ic);
+	collection.push_back(this->j_ic);
+	
+	collection.push_back(this->a1_ic);
+	collection.push_back(this->a2_ic);
+	collection.push_back(this->a3_ic);
+	collection.push_back(this->a4_ic);
+	collection.push_back(this->a5_ic);
+	
+	collection.push_back(this->b1_ic);
+	collection.push_back(this->b2_ic);
+	collection.push_back(this->b3_ic);
+	collection.push_back(this->b4_ic);
+	collection.push_back(this->b5_ic);
+
+	
+	return collection;
+}
+
+void icpar_set::cout_pars(vector<par> collection)
+{
+	for(unsigned int i = 0; i < collection.size(); i++)
+	{
+		cout << collection[i].par_str;
+		cout << " = ";
+		cout << collection[i].par_dbl;
+		cout << endl;
+	}
+}
+
+void icpar_set::check_cmd_line(int argc, char* argv[])
+{
+	par_cmd cmd(argv, argv+argc);
+	
+	this->er_ic.par_dbl = cmd.get_dbl(this->er_ic.par_str, this->er_ic.par_dbl);
+	this->ei_ic.par_dbl = cmd.get_dbl(this->ei_ic.par_str, this->ei_ic.par_dbl);
+	this->g_ic.par_dbl = cmd.get_dbl(this->g_ic.par_str, this->g_ic.par_dbl);
+	this->q_ic.par_dbl = cmd.get_dbl(this->q_ic.par_str, this->q_ic.par_dbl);
+	this->j_ic.par_dbl = cmd.get_dbl(this->j_ic.par_str, this->j_ic.par_dbl);
+	
+	this->a1_ic.par_dbl = cmd.get_dbl(this->a1_ic.par_str, this->a1_ic.par_dbl);
+	this->a2_ic.par_dbl = cmd.get_dbl(this->a2_ic.par_str, this->a2_ic.par_dbl);
+	this->a3_ic.par_dbl = cmd.get_dbl(this->a3_ic.par_str, this->a3_ic.par_dbl);
+	this->a4_ic.par_dbl = cmd.get_dbl(this->a4_ic.par_str, this->a4_ic.par_dbl);
+	this->a5_ic.par_dbl = cmd.get_dbl(this->a5_ic.par_str, this->a5_ic.par_dbl);
+
+	this->b1_ic.par_dbl = cmd.get_dbl(this->b1_ic.par_str, this->b1_ic.par_dbl);
+	this->b2_ic.par_dbl = cmd.get_dbl(this->b2_ic.par_str, this->b2_ic.par_dbl);
+	this->b3_ic.par_dbl = cmd.get_dbl(this->b3_ic.par_str, this->b3_ic.par_dbl);
+	this->b4_ic.par_dbl = cmd.get_dbl(this->b4_ic.par_str, this->b4_ic.par_dbl);
+	this->b5_ic.par_dbl = cmd.get_dbl(this->b5_ic.par_str, this->b5_ic.par_dbl);
 }
 
 //###########################################
