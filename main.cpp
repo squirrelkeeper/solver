@@ -70,6 +70,10 @@ int main(int argc, char* argv[])
 		+ to_string((*par2_ptr).par_dbl)
 		+ "_"
 		+(*par1_ptr).par_str
+		+ "_"
+		+ to_string(mode.par1_start)
+		+ "_to_"
+		+ to_string(mode.par1_stop)
 		+ ".ls.dat";
 	
 		first_line = "#" 
