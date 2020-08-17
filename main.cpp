@@ -22,7 +22,7 @@
 #include "timeseries.hpp"
 
 #include "integrate.hpp"
-#include "scan.hpp"
+
 
 
 
@@ -52,6 +52,19 @@ int main(int argc, char* argv[])
 	par *par2_ptr;
 	int pts = 1;
 	double incr = 0.0;
+	
+	
+	
+	if(mode.mode_str == "TS_pp")
+	{
+		file_name = "num_D"
+		+ to_string(AP.IP.D.par_dbl)
+		+ ".ts.dat";
+	
+		first_line = "#start\tend\tpos\n";
+	}
+	
+	
 	
 	if(mode.mode_str == "lscan")
 	{
@@ -88,6 +101,11 @@ int main(int argc, char* argv[])
 		+ "pp" 
 		+ '\n';
 	}
+
+
+	
+	
+	
 	
 	ofstream out;
 	out.open(file_name);
@@ -95,6 +113,47 @@ int main(int argc, char* argv[])
 	
 	
 
+	
+	
+		
+	if(mode.mode_str == "TS_pp")
+	{
+		if(AP.FP.K.par_dbl == 0)
+		{
+			IC.j_ic.par_dbl = 0.0;
+		}
+			
+			
+		vector<double> hom_const_IC = {
+			IC.er_ic.par_dbl,
+			IC.ei_ic.par_dbl,
+			IC.g_ic.par_dbl, 
+			IC.q_ic.par_dbl, 
+			IC.j_ic.par_dbl
+		};
+			
+		initial_con hom_IC("const", hom_const_IC, AP);
+		
+		integrator IN(AP);
+		IN.initialize(hom_IC);
+	
+		tuple<timeseries, pp_evaluation> hom_TS_PP = IN.integrate_noise_analysis("simple");
+		
+
+		for(long i2 = 0; i2 < get<1>(hom_TS_PP).pulse_list_len; i2++)
+		{
+			out << get<1>(hom_TS_PP).pulse_list[i2].left_pos  << '\t';
+			out << get<1>(hom_TS_PP).pulse_list[i2].right_pos << '\t';
+			out << setprecision(15);
+			out << get<1>(hom_TS_PP).pulse_list[i2].pos;
+			out << endl;
+		}
+		
+		get<0>(hom_TS_PP).write_file("TS_"+file_name);
+		
+	}
+	
+	
 	
 	
 	
@@ -119,23 +178,9 @@ int main(int argc, char* argv[])
 			};
 			
 			initial_con hom_IC("const", hom_const_IC, AP);
-			
-			allpar_set AP_first = AP;
-			
-			AP_first.IP.int_time.par_dbl = 5000 + AP_first.larger_delay() * 100;
-			AP_first.IP.out_time.par_dbl = AP_first.larger_delay();
-			
-			integrator init_IN(AP_first);
-			init_IN.initialize(hom_IC);
-		
-			timeseries init_TS = init_IN.integrate_noise();
-
-
-			
+				
 			for(int i2 = 0; i2 < realisations; i2++)
 			{
-				initial_con hom_IC(init_TS);
-				
 				integrator hom_IN(AP);
 				hom_IN.initialize(hom_IC);
 				
@@ -162,7 +207,7 @@ int main(int argc, char* argv[])
 		}
 	
 	}
-	
+
 	
 
 	
@@ -208,7 +253,7 @@ int main(int argc, char* argv[])
 		cout << get<1>(hom_TS_PP).average << endl;
 		cout << get<1>(hom_TS_PP).pulse_list_len << endl;
 		
-/*
+
 		for(long i = 0; i < get<1>(hom_TS_PP).pulse_list_len; i++)
 		{
 			
@@ -216,19 +261,18 @@ int main(int argc, char* argv[])
 			cout << get<1>(hom_TS_PP).pulse_list[i].max_val << '\t';
 			cout << endl;
 		}
-*/
 
 
-/*
+
+
 		for(long i = 1; i < get<1>(hom_TS_PP).pulse_list_len; i++)
 		{
 			
 			cout << get<1>(hom_TS_PP).pulse_list[i].max_pos-get<1>(hom_TS_PP).pulse_list[i-1].max_pos << '\t';
 			cout << endl;
-		}
-*/
 
-/*
+
+
 		for(long i = 0; i < get<1>(hom_TS_PP).pulse_list_len; i++)
 		{
 			
@@ -309,13 +353,13 @@ int main(int argc, char* argv[])
 //	AP.IP.int_time.par_dbl = 100;
 //	AP.IP.out_time.par_dbl = 10;
 	
-/*	
+
 	integrator temp_IN(AP);
 	temp_IN = hom_IN;
 	double period = temp_IN.get_period();
 	
 	cout << period << endl;
-// */	
+	
 //	integrator adj1_IN(AP);
 //	timeseries adj1_TS(AP);
 //	adj1_IN.initialize(adj1_IC);
@@ -337,7 +381,6 @@ int main(int argc, char* argv[])
 	
 	
 	
-/*	
 	double b11 = adj1_IN.bilinear_one_step(hom_TS, neutral_modes[0], adj1_TS);
 	double b12 = adj1_IN.bilinear_one_step(hom_TS, neutral_modes[1], adj1_TS);
 	double b21 = adj2_IN.bilinear_one_step(hom_TS, neutral_modes[0], adj1_TS);
@@ -347,17 +390,18 @@ int main(int argc, char* argv[])
 	cout << b12 << endl;
 	cout << b21 << endl;
 	cout << b22 << endl;
-*/
+
 	
-/*	
+	
 	adj2_TS.write_file("test_adj1");
 	adj1_TS.write_file("test_adj2");
 	neutral_modes[0].write_file("test_neut1");
 	neutral_modes[1].write_file("test_neut2");
-*/	
+	
 	
 //	cout << get<1>(hom_TS_EV).UniqMaxVal.size() << endl;
 //	cout << get<1>(hom_TS_EV).UniqMinVal.size() << endl;
 	
 //	get<0>(hom_TS_EV).write_file("test_hom");
 	
+*/
