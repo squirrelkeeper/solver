@@ -84,8 +84,8 @@ integrator::integrator(allpar_set ap_init)
 	
 	it = (long)(ip.int_time / ip.dt);
 
-	double tau1 = AP.smaller_delay();
-	double tau2 = AP.larger_delay();
+	double tau1 = lp.T;
+	double tau2 = lp.T + fp.tau;
 
 	dim1 = (long)(floor(tau1 / ip.dt));
 	dim2 = (long)(floor(tau2 / ip.dt)+1);
@@ -119,24 +119,7 @@ void integrator::initialize(initial_con IC)
 }
 
 
-void integrator::initialize(string opt)
-{
-	lpar_dbl_set lp(AP);
-	fpar_dbl_set fp(AP);
-	ipar_dbl_set ip(AP);
-	
-	if(opt == "bil")
-	{
-		double tauL = AP.larger_delay();
-		
-		dim1 = (long)(floor(lp.T / ip.dt));
-		dim2 = (long)(floor(fp.tau / ip.dt));
 
-		long dimL = (long)(floor(tauL / ip.dt));
-		
-		pos0 = 2*dimL;
-	}
-}
 
 
 timeseries integrator::integrate()
@@ -653,7 +636,13 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 		pos1 = (pos1+1) % dim2;
 	}
 	
-	pp_evaluation PP(&TS, AP);	
+	pp_evaluation PP(&TS, AP);
+
+	cout << lp->T << endl;
+	cout << fp->tau << endl;
+	cout << dim1 << endl;
+	cout << dim2 << endl;
+
 	
 	for(long i=0; i < TS.len; i++)
 	{
@@ -670,11 +659,13 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
 		
 		
+		
 		X[pos2].ER = Xnew.ER;
 		X[pos2].EI = Xnew.EI;
 		X[pos2].G = Xnew.G;
 		X[pos2].Q = Xnew.Q;
 		X[pos2].J = Xnew.J;
+		
 		Time += ip->dt;
 		I = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
 		

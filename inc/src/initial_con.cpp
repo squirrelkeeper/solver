@@ -14,7 +14,7 @@ using namespace std;
 
 initial_con::initial_con(allpar_set init_AP)
 {
-	double tau = init_AP.larger_delay();
+	double tau = init_AP.LP.T.par_dbl+init_AP.FP.tau.par_dbl;
 	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
@@ -32,7 +32,7 @@ initial_con::initial_con(allpar_set init_AP)
 
 initial_con::initial_con(string opt, allpar_set init_AP)
 {
-	double tau = init_AP.larger_delay();
+	double tau = init_AP.LP.T.par_dbl+init_AP.FP.tau.par_dbl;
 	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
@@ -59,7 +59,7 @@ initial_con::initial_con(string opt, allpar_set init_AP)
 
 initial_con::initial_con(string opt, double first, double sec, allpar_set init_AP)
 {
-	double tau = init_AP.larger_delay();
+	double tau = init_AP.LP.T.par_dbl+init_AP.FP.tau.par_dbl;
 	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
@@ -107,7 +107,7 @@ initial_con::initial_con(string opt, double first, double sec, allpar_set init_A
 
 initial_con::initial_con(string opt, var X_IC, allpar_set init_AP)
 {
-	double tau = init_AP.larger_delay();
+	double tau = init_AP.LP.T.par_dbl+init_AP.FP.tau.par_dbl;
 	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
@@ -128,7 +128,7 @@ initial_con::initial_con(string opt, var X_IC, allpar_set init_AP)
 
 initial_con::initial_con(string opt, vector<double> X_IC, allpar_set init_AP)
 {
-	double tau = init_AP.larger_delay();
+	double tau = init_AP.LP.T.par_dbl+init_AP.FP.tau.par_dbl;
 	double dt = init_AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 	
@@ -155,7 +155,8 @@ initial_con::initial_con(string opt, vector<double> X_IC, allpar_set init_AP)
 
 initial_con::initial_con(timeseries TS)
 {
-	double tau = TS.AP.larger_delay();
+	double tau = TS.AP.LP.T.par_dbl + TS.AP.FP.tau.par_dbl;
+;
 	double dt = TS.AP.IP.dt.par_dbl;
 	long len = (long)(floor(tau / dt)+1);
 

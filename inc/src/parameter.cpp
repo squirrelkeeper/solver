@@ -183,7 +183,7 @@ fpar_set::fpar_set(string option)
 	else if(option == "NOFB")
 	{
 		this->K.par_dbl = 0.0;
-		this->tau.par_dbl = 1.0;
+		this->tau.par_dbl = 0.0;
 		this->wLP.par_dbl = 2.0 * M_PI;
 	}
 	else if(option == "def")
@@ -394,7 +394,7 @@ void allpar_set::check_cmd_line(int argc, char* argv[])
 	this->IP.int_time.par_dbl = cmd.get_dbl(this->IP.int_time.par_str, this->IP.int_time.par_dbl);
 	this->IP.out_time.par_dbl = cmd.get_dbl(this->IP.out_time.par_str, this->IP.out_time.par_dbl);
 	this->IP.dt.par_dbl = cmd.get_dbl(this->IP.dt.par_str, this->IP.dt.par_dbl);
-	this->IP.sqrtdt.par_dbl = sqrt(cmd.get_dbl(this->IP.dt.par_str, sqrt(this->IP.dt.par_dbl)));
+	this->IP.sqrtdt.par_dbl = cmd.get_dbl(this->IP.dt.par_str, sqrt(this->IP.dt.par_dbl));
 	this->IP.D.par_dbl = cmd.get_dbl(this->IP.D.par_str, this->IP.D.par_dbl);
 	this->IP.rea.par_dbl = cmd.get_dbl(this->IP.rea.par_str, this->IP.rea.par_dbl);
 }

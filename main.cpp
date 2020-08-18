@@ -34,15 +34,13 @@ int main(int argc, char* argv[])
 {
 	timer time_total;
 
-	allpar_set AP("JAU15", "TAU1", "quick");
+	allpar_set AP("JAU15", "NOFB", "quick");
 	AP.check_cmd_line(argc, argv);
 
 	icpar_set IC("std");
 	IC.check_cmd_line(argc, argv);
 	
 
-
-	
 	mode_cmd mode(argc, argv);
 
 	string file_name = "test.dat";
@@ -61,7 +59,7 @@ int main(int argc, char* argv[])
 		+ to_string(AP.IP.D.par_dbl)
 		+ ".ts.dat";
 	
-		first_line = "#start\tend\tpos\n";
+		first_line = "#start\tend\tpos\tdt\n";
 	}
 	
 	
@@ -90,9 +88,9 @@ int main(int argc, char* argv[])
 		+ ".ls.dat";
 	
 		first_line = "#" 
-		+ (*par2_ptr).par_str 
-		+ '\t' 
 		+ (*par1_ptr).par_str 
+		+ '\t' 
+		+ (*par2_ptr).par_str 
 		+ '\t' 
 		+ "rea" 
 		+ '\t' 
@@ -137,7 +135,7 @@ int main(int argc, char* argv[])
 		integrator IN(AP);
 		IN.initialize(hom_IC);
 	
-		tuple<timeseries, pp_evaluation> hom_TS_PP = IN.integrate_noise_analysis("simple");
+		tuple<timeseries, pp_evaluation> hom_TS_PP = IN.integrate_noise_analysis("mwa");
 		
 
 		for(long i2 = 0; i2 < get<1>(hom_TS_PP).pulse_list_len; i2++)
@@ -145,7 +143,17 @@ int main(int argc, char* argv[])
 			out << get<1>(hom_TS_PP).pulse_list[i2].left_pos  << '\t';
 			out << get<1>(hom_TS_PP).pulse_list[i2].right_pos << '\t';
 			out << setprecision(15);
-			out << get<1>(hom_TS_PP).pulse_list[i2].pos;
+			out << get<1>(hom_TS_PP).pulse_list[i2].pos << '\t';
+			if(i2 > 0)
+			{
+				out << get<1>(hom_TS_PP).pulse_list[i2].pos - get<1>(hom_TS_PP).pulse_list[i2-1].pos;
+			}
+			else
+			{
+				out << 0.0;
+			}
+			
+			
 			out << endl;
 		}
 		

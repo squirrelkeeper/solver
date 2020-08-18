@@ -555,18 +555,18 @@ void pp_evaluation::FindGlobalExtrAvrg()
 
 void pp_evaluation::DetectPulses_simple()
 {
-	double RelTrigThres =  0.2;
+	double RelTrigThres =  0.1;
 	double AbsTrigThres = RelTrigThres * GlobalSupr + 1.1 * AP.IP.D.par_dbl;
 	
 	double AbsResetThres;
 	
-	if(RelTrigThres * GlobalSupr < average)
+	if(RelTrigThres * GlobalSupr < average * 0.75)
 	{
 		AbsResetThres = RelTrigThres * GlobalSupr;
 	}
 	else if(RelTrigThres * GlobalSupr >= average)
 	{
-		AbsResetThres = average;
+		AbsResetThres = average * 0.75;
 	}
 	
 	
