@@ -711,6 +711,15 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 		
 		PP.FindPos();
 	}
+	else if(opt == "mwa")
+	{
+		PP.DetectPulses_MWA();
+		
+		PP.FilterSamePos();
+		PP.FilterTooClose();
+		
+		PP.FindPos();
+	}
 	
 	
 	tuple<timeseries, pp_evaluation> OUT = make_tuple(TS, PP);

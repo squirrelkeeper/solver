@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 				integrator hom_IN(AP);
 				hom_IN.initialize(hom_IC);
 				
-				tuple<timeseries, pp_evaluation> hom_TS_PP = hom_IN.integrate_noise_analysis("simple");
+				tuple<timeseries, pp_evaluation> hom_TS_PP = hom_IN.integrate_noise_analysis("mwa");
 				
 				for(long i3 = 1; i3 < get<1>(hom_TS_PP).pulse_list_len; i3++)
 				{

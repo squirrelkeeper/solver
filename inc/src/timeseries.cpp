@@ -586,7 +586,7 @@ void pp_evaluation::DetectPulses_simple()
 		}
 
 		if(triggered)
-		{			
+		{
 			if((*I_ptr)[i] >= pulse_list[curr_pulse].max_val)
 			{
 				pulse_list[curr_pulse].max_pos = i;
@@ -672,7 +672,7 @@ void pp_evaluation::DetectPulses_MWA()
 			pulse_list.push_back(P);
 			pulse_list_len++;
 			curr_pulse++;
-		}
+ 		}
 
 		if(triggered)
 		{			
