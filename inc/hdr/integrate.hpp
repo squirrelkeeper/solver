@@ -107,6 +107,7 @@ public:
 	
 	timeseries integrate_noise();
 	std::tuple<timeseries, pp_evaluation> integrate_noise_analysis(std::string);
+	std::vector<double> integrate_noise_conc_analysis();
 
 	timeseries integrate_adj(timeseries);
 	double bilinear_prod(timeseries, timeseries, timeseries);

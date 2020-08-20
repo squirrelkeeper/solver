@@ -63,6 +63,16 @@ int main(int argc, char* argv[])
 	}
 	
 	
+	if(mode.mode_str == "long")
+	{
+		file_name = "num_D"
+		+ to_string(AP.IP.D.par_dbl)
+		+ ".ts.dat";
+	
+		first_line = "#rea\ttisi\n";
+	}
+	
+	
 	
 	if(mode.mode_str == "lscan")
 	{
@@ -75,7 +85,7 @@ int main(int argc, char* argv[])
 		pts = mode.par1_steps;
 		incr = (mode.par1_stop-mode.par1_start)/mode.par1_steps;
 		
-		file_name = "num_"
+		file_name = "num_pp_"
 		+ (*par2_ptr).par_str
 		+ "_"
 		+ to_string((*par2_ptr).par_dbl)
@@ -216,7 +226,56 @@ int main(int argc, char* argv[])
 	
 	}
 
-	
+	if(mode.mode_str == "long")
+	{
+		int realisations = (int)(AP.IP.rea.par_dbl);
+
+		if(AP.FP.K.par_dbl == 0)
+		{
+			IC.j_ic.par_dbl = 0.0;
+		}
+			
+			
+		vector<double> hom_const_IC = {
+			IC.er_ic.par_dbl,
+			IC.ei_ic.par_dbl,
+			IC.g_ic.par_dbl, 
+			IC.q_ic.par_dbl, 
+			IC.j_ic.par_dbl
+		};
+			
+		initial_con hom_IC("const", hom_const_IC, AP);
+
+		for(int i1 = 0; i1 < realisations; i1++)
+		{
+			integrator hom_IN(AP);
+			hom_IN.initialize(hom_IC);
+			
+			vector<double> PP = hom_IN.integrate_noise_conc_analysis();
+			
+			for(unsigned i2 = 0; i2 < PP.size(); i2++)
+			{
+				
+				out << i1 << '\t';
+				out << setprecision(15);
+				out << PP[i2];
+				out << endl;
+
+
+				cout << i1 << '\t';
+				cout << setprecision(15);
+				cout << PP[i2];
+				cout << endl;
+
+				
+			}
+			
+			
+			
+		}
+
+	}
+
 
 	
 	out.close();

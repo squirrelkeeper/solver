@@ -637,12 +637,6 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 	}
 	
 	pp_evaluation PP(&TS, AP);
-
-	cout << lp->T << endl;
-	cout << fp->tau << endl;
-	cout << dim1 << endl;
-	cout << dim2 << endl;
-
 	
 	for(long i=0; i < TS.len; i++)
 	{
@@ -716,6 +710,275 @@ tuple<timeseries, pp_evaluation> integrator::integrate_noise_analysis(string opt
 	tuple<timeseries, pp_evaluation> OUT = make_tuple(TS, PP);
 	return OUT;
 }
+
+
+
+vector<double> integrator::integrate_noise_conc_analysis()
+{
+	vector<double> pulse_pos_list;
+	vector<double> max_val_list;
+	vector<bool> del_list;
+	
+	
+	random_device true_rnd; 
+	int seed = true_rnd();
+	mt19937 rnd_gen(seed); 
+	normal_distribution<double> rnd_distr(0,1); 
+	
+	
+	LOOKUP_EXP_INIT();
+	LOOKUP_SIN_INIT();
+	LOOKUP_COS_INIT();
+
+
+	lpar_dbl_set *lp = new lpar_dbl_set(AP);
+	fpar_dbl_set *fp = new fpar_dbl_set(AP);
+	ipar_dbl_set *ip = new ipar_dbl_set(AP);
+	
+	
+	double GlobalSupr = 0.0;
+	double GlobalInfi = 0.0;
+	double sum = 0.0;
+	double I;
+	double max_val;
+	
+	long out = (long)(AP.IP.out_time.par_dbl/AP.IP.dt.par_dbl);
+	
+	vector<double> t(dim2, 0.0);
+	
+	for(long i = 0; i < it-out; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		Xnew.ER+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+
+		Time += ip->dt;
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		t[pos2] = Time;
+		
+
+		
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+	}
+	
+	
+	for(long i = 0; i < 10*dim2; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		Xnew.ER+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+
+		Time += ip->dt;
+		I = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		t[pos2] = Time;
+
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		
+		sum += I;
+		
+		if(I > GlobalSupr)
+		{
+			GlobalSupr = I;
+		}
+		
+		if(I < GlobalInfi)
+		{
+			GlobalInfi = I;
+		}
+	}
+
+	double average = sum/(10.0 * dim2);
+	
+	
+	double RelTrigThres =  0.1;
+	double AbsTrigThres = RelTrigThres * GlobalSupr + 1.1 * AP.IP.D.par_dbl;
+	
+	double AbsResetThres;
+	
+	if(RelTrigThres * GlobalSupr < average * 0.75)
+	{
+		AbsResetThres = RelTrigThres * GlobalSupr;
+	}
+	else if(RelTrigThres * GlobalSupr >= average)
+	{
+		AbsResetThres = average * 0.75;
+	}
+	
+	
+	bool triggered = false;
+	int curr_pulse = -1;
+
+	
+	
+	for(long i = 0; i < out; i++)
+	{
+		
+		dX = derive_real(X[pos0], X[pos1], X[pos2], lp, fp);
+		
+		Xnew.ER = X[pos0].ER + ip->dt * dX.ER;
+		Xnew.EI = X[pos0].EI + ip->dt * dX.EI;
+		Xnew.G  = X[pos0].G  + ip->dt * dX.G;
+		Xnew.Q  = X[pos0].Q  + ip->dt * dX.Q;
+		Xnew.J  = X[pos0].J  + ip->dt * dX.J;
+		
+		Xnew.ER+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		Xnew.EI+= ip->D * ip->sqrtdt * rnd_distr(rnd_gen);
+		
+
+		Time += ip->dt;
+		I = Xnew.ER*Xnew.ER+Xnew.EI*Xnew.EI;
+	
+		
+		
+		X[pos2].ER = Xnew.ER;
+		X[pos2].EI = Xnew.EI;
+		X[pos2].G = Xnew.G;
+		X[pos2].Q = Xnew.Q;
+		X[pos2].J = Xnew.J;
+		t[pos2] = Time;
+		
+		
+		pos0 = pos2;
+		pos2 = (pos2+1) % dim2;
+		pos1 = (pos1+1) % dim2;
+		
+		
+		if(!triggered && I >= AbsTrigThres)
+		{
+			triggered = true;
+			max_val = 0.0;
+			
+			curr_pulse++;
+		}
+		
+		if(triggered)
+		{
+			if(I >= max_val)
+			{
+				max_val = I;
+			}
+		}
+		
+		if(triggered && (I < AbsResetThres))
+		{
+			
+			triggered = false;
+			
+//			cout << max_val << '\t';
+			
+			max_val_list.push_back(max_val);
+			max_val = 0.0;
+			del_list.push_back(false);
+			
+			
+			long temp_pos0 = pos0;
+			
+			double p_sum = 0.0;
+			double I_sum = 0.0;
+			
+			
+			for(long j = 0; j < dim2 - 1; j++)
+			{
+				
+				p_sum += (X[temp_pos0].ER * X[temp_pos0].ER + X[temp_pos0].EI * X[temp_pos0].EI) * t[temp_pos0];
+				I_sum += X[temp_pos0].ER * X[temp_pos0].ER + X[temp_pos0].EI * X[temp_pos0].EI;
+				
+				temp_pos0 = (dim2 + ((temp_pos0 - 1) % dim2)) % dim2;
+
+				if(X[temp_pos0].ER * X[temp_pos0].ER + X[temp_pos0].EI * X[temp_pos0].EI < AbsResetThres)
+				{
+					break;
+				}
+				else if(j == dim2 - 2)
+				{
+					del_list[curr_pulse] = true;
+					break;
+				}
+				
+				
+
+				
+				
+
+			}
+			
+			pulse_pos_list.push_back(p_sum / I_sum);
+		}
+
+	}
+	
+	for(unsigned i = 1; i < pulse_pos_list.size(); i++)
+	{
+		bool con1 = (pulse_pos_list[i] - pulse_pos_list[i-1] < 0.2);
+		bool con2 = (max_val_list[i] == max_val_list[i-1]);
+		
+		if(con1 || con2)
+		{
+			del_list[i] = true;
+		}
+	}
+	
+	vector<double> purged_pulse_pos_list;
+	
+	for(unsigned i = 0; i < pulse_pos_list.size(); i++)
+	{
+		if(!del_list[i])
+		{
+			purged_pulse_pos_list.push_back(pulse_pos_list[i]);
+		}
+	}
+	
+	vector<double> pulse_tisi_list;
+	
+	for(unsigned i = 1; i < purged_pulse_pos_list.size(); i++)
+	{
+		pulse_tisi_list.push_back(purged_pulse_pos_list[i]-purged_pulse_pos_list[i-1]);
+	}
+	
+	
+
+	
+
+	
+	return pulse_tisi_list;
+}
+
 
 
 
