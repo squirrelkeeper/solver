@@ -1,10 +1,10 @@
 import numpy as np
 
-pts = 101
+pts = 100
 
 par1_name = "K"
 par1_start = 0.0
-par1_stop = 5.0
+par1_stop = 8.0
 par1_interval = par1_stop - par1_start 
 par1_incr = par1_interval / pts
 
@@ -13,7 +13,7 @@ par2_name = "tau"
 par2_start = 0.0
 par2_stop = 5.0
 
-par2 = np.linspace(par2_start, par2_stop, pts)
+par2 = np.linspace(par2_start, par2_stop, pts, endpoint=False)
 
 
 
@@ -25,7 +25,7 @@ jobs_per_arfile = 1000
 base_str1 = "-m:lscan[" + par1_name + ","
 base_str2 = ","
 base_str3 = "," + str(pxl_per_job) + "," + par2_name + "] -" + par2_name + " "
-base_str4 = " -rea 100 -int_time 1500 -out_time 100"
+base_str4 = " -rea 100 -D 0.2 -int_time 1500 -out_time 100 -wLP " +str(np.pi*0.75) 
 
 
 

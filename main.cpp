@@ -202,17 +202,16 @@ int main(int argc, char* argv[])
 				integrator hom_IN(AP);
 				hom_IN.initialize(hom_IC);
 				
-				tuple<timeseries, pp_evaluation> hom_TS_PP = hom_IN.integrate_noise_analysis("mwa");
+				vector<double> PP = hom_IN.integrate_noise_conc_analysis();
 				
-				for(long i3 = 1; i3 < get<1>(hom_TS_PP).pulse_list_len; i3++)
+				for(unsigned i3 = 1; i3 < PP.size(); i3++)
 				{
 					
 					out << (*par1_ptr).par_dbl << '\t';
 					out << (*par2_ptr).par_dbl << '\t';
 					out << i2 << '\t';
-					out << i3 << '\t';
 					out << setprecision(15);
-					out << get<1>(hom_TS_PP).pulse_list[i3].pos - get<1>(hom_TS_PP).pulse_list[i3-1].pos;
+					out << PP[i3];
 					out << endl;
 				}
 				
