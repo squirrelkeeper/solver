@@ -98,7 +98,6 @@ int main(int argc, char* argv[])
 	
 	if(mode.mode_str == "maxsweep")
 	{
-		cout << AP.LP.sqrtkap.par_dbl**2 << endl;
 		par1_ptr = AP.get_par_ptr(mode.par1_str);
 		
 		if(mode.up_down == "up")
@@ -116,6 +115,10 @@ int main(int argc, char* argv[])
 		
 		file_name = "max_sweep_"
 		+ mode.up_down
+		+ "_ag_"
+		+ to_string(AP.LP.ag.par_dbl)
+		+ "_aq_"
+		+ to_string(AP.LP.aq.par_dbl)
 		+ "_"
 		+(*par1_ptr).par_str
 		+ "_"
