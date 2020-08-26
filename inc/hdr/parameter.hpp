@@ -38,6 +38,7 @@ public:
 
 	std::string par1_str;
 	std::string par2_str;
+	std::string par3_str;
 	
 	double par1_start;
 	double par1_stop;

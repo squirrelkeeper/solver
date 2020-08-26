@@ -130,6 +130,27 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 	}
 	
 	
+	if(mode_str == "maxsweep_twopar")
+	{
+		regex maxsweep_twopar_rgx(R"(maxsweep_twopar\[\[(.*?),(.*?)\],(.*?),(.*?),(.*?),(.*?)\])");
+		smatch maxsweep_twopar_match;
+		
+		if(regex_search(cmd_line, maxsweep_twopar_match, maxsweep_twopar_rgx))
+		{
+		
+			par1_str = maxsweep_twopar_match[1];
+			par2_str = maxsweep_twopar_match[2];
+
+			par1_start = stod(maxsweep_twopar_match[3]);
+			par1_stop  = stod(maxsweep_twopar_match[4]);
+			par1_steps = stoi(maxsweep_twopar_match[5]);
+			up_down = maxsweep_twopar_match[6];
+			
+		}
+		
+	}
+	
+	
 	
 	if(mode_str == "statesweep")
 	{
