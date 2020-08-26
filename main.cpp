@@ -123,7 +123,51 @@ int main(int argc, char* argv[])
 		first_line = "#"+(*par1_ptr).par_str+"\tImax\tper\tstate\n";
 	}
 	
+	if(mode.mode_str == "statesweep")
+	{
+		par1_ptr = AP.get_par_ptr(mode.par1_str);
+		par2_ptr = AP.get_par_ptr(mode.par2_str);
+		
+		
+		if(mode.up_down == "up")
+		{
+			(*par1_ptr).par_dbl = mode.par1_start;
+		}
+		else if(mode.up_down == "down")
+		{
+			(*par1_ptr).par_dbl = mode.par1_stop;
+		}
+
+		pts = mode.par1_steps;
+		
+		incr = (mode.par1_stop-mode.par1_start)/mode.par1_steps;
+		
+		file_name = "state_sweep_"
+		+ mode.up_down
+		+ "_"
+		+ (*par2_ptr).par_str
+		+ "_"
+		+ to_string((*par2_ptr).par_dbl)
+		+ "_"
+		+(*par1_ptr).par_str
+		+ "_"
+		+ to_string(mode.par1_start)
+		+ "_to_"
+		+ to_string(mode.par1_stop)
+		+ ".ms.dat";
 	
+		first_line = "#" 
+		+ (*par2_ptr).par_str 
+		+ '\t' 
+		+ (*par1_ptr).par_str 
+		+ '\t' 
+		+ "per" 
+		+ '\t' 
+		+ "state" 
+		+ '\t' 
+		+ "uniqmax" 
+		+ '\n';
+	}
 	
 	
 	if(mode.mode_str == "long")
@@ -375,56 +419,75 @@ int main(int argc, char* argv[])
 	
 	
 	
-	if(mode.mode_str == "lscan")
+	
+		
+	
+	if(mode.mode_str == "statesweep")
 	{
+		if(AP.FP.K.par_dbl == 0)
+		{
+			IC.j_ic.par_dbl = 0.0;
+		}
+			
+			
+		vector<double> hom_const_vec = {
+			IC.er_ic.par_dbl,
+			IC.ei_ic.par_dbl,
+			IC.g_ic.par_dbl, 
+			IC.q_ic.par_dbl, 
+			IC.j_ic.par_dbl
+		};
+			
+		initial_con hom_const_IC("const", hom_const_vec, AP);
+		
+		integrator IN(AP);
+		IN.initialize(hom_const_IC);
+
+		tuple<timeseries, ts_evaluation> hom_TS_EV = IN.integrate_analysis("full");
+
+		
+		
 		for(int i1 = 0; i1 < pts; i1++)
 		{
-			int realisations = (int)(AP.IP.rea.par_dbl);
-	
-			if(AP.FP.K.par_dbl == 0)
-			{
-				IC.j_ic.par_dbl = 0.0;
-			}
 			
-			
-			vector<double> hom_const_IC = {
-				IC.er_ic.par_dbl,
-				IC.ei_ic.par_dbl,
-				IC.g_ic.par_dbl, 
-				IC.q_ic.par_dbl, 
-				IC.j_ic.par_dbl
-			};
-			
-			initial_con hom_IC("const", hom_const_IC, AP);
-				
-			for(int i2 = 0; i2 < realisations; i2++)
-			{
-				integrator hom_IN(AP);
-				hom_IN.initialize(hom_IC);
-				
-				vector<double> PP = hom_IN.integrate_noise_conc_analysis();
-				
-				for(unsigned i3 = 1; i3 < PP.size(); i3++)
-				{
-					
-					out << (*par1_ptr).par_dbl << '\t';
-					out << (*par2_ptr).par_dbl << '\t';
-					out << i2 << '\t';
-					out << setprecision(15);
-					out << PP[i3];
-					out << endl;
-				}
-				
-				
-				
-			}
 
-			(*par1_ptr).par_dbl += incr;
 			
-		}
+			initial_con hom_IC(get<0>(hom_TS_EV));
+			
+			integrator IN(AP);
+			IN.initialize(hom_IC);
+
+			hom_TS_EV = IN.integrate_analysis("full");
+			
+			
+			out << (*par2_ptr).par_dbl << '\t';
+			out << (*par1_ptr).par_dbl << '\t';
+			out << get<1>(hom_TS_EV).period << '\t';
+			out << get<1>(hom_TS_EV).state << '\t';
+			out << get<1>(hom_TS_EV).UniqMaxVal.size();
+
+			out << endl;
+		
 	
+			
+			if(mode.up_down == "up")
+			{
+				(*par1_ptr).par_dbl += incr;
+			}
+			else if(mode.up_down == "down")
+			{
+				(*par1_ptr).par_dbl -= incr;
+			}
+			
+		}	
 	}
 
+	
+	
+	
+	
+	
+	
 	if(mode.mode_str == "long")
 	{
 		int realisations = (int)(AP.IP.rea.par_dbl);

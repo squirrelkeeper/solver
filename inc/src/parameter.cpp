@@ -129,6 +129,29 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 		
 	}
 	
+	
+	
+	if(mode_str == "statesweep")
+	{
+		regex statesweep_rgx(R"(statesweep\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\])");
+		smatch statesweep_match;
+		
+		if(regex_search(cmd_line, statesweep_match, statesweep_rgx))
+		{
+		
+			par1_str = statesweep_match[1];
+
+			par1_start = stod(statesweep_match[2]);
+			par1_stop  = stod(statesweep_match[3]);
+			par1_steps = stoi(statesweep_match[4]);
+			
+			par2_str = statesweep_match[5];
+			up_down = statesweep_match[6];
+			
+		}
+		
+	}
+	
 }
 
 
