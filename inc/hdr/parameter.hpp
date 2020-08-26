@@ -43,6 +43,8 @@ public:
 	double par1_stop;
 	int par1_steps;
 	
+	std::string up_down;
+	
 	mode_cmd(int, char**);
 };
 

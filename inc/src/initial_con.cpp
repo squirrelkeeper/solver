@@ -162,11 +162,15 @@ initial_con::initial_con(timeseries TS)
 
 	hist.resize(len);
 
-	if(len < TS.len)
+	if(len > TS.len)
 	{
-		cout << "err004" << endl;
+		cout << "err004 - len: ";
+		cout << len;
+		cout << " TS.len: ";
+		cout << TS.len;
+		cout << endl;
 	}
-	for(long i = 0; i < len; i++)
+ 	for(long i = 0; i < len; i++)
 	{
 		hist[i] = TS.X[i+TS.len-len];
 	}

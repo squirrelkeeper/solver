@@ -89,6 +89,46 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 		
 	}
 	
+	if(mode_str == "maxscan")
+	{
+		regex maxscan_rgx(R"(maxscan\[(.*?),(.*?),(.*?),(.*?),(.*?)\])");
+		smatch maxscan_match;
+		
+		if(regex_search(cmd_line, maxscan_match, maxscan_rgx))
+		{
+		
+			par1_str = maxscan_match[1];
+
+			par1_start = stod(maxscan_match[2]);
+			par1_stop  = stod(maxscan_match[3]);
+			par1_steps = stoi(maxscan_match[4]);
+			up_down = maxscan_match[5];
+			
+		}
+		
+	}
+	
+	
+	
+	if(mode_str == "maxsweep")
+	{
+		regex maxsweep_rgx(R"(maxsweep\[(.*?),(.*?),(.*?),(.*?),(.*?)\])");
+		smatch maxsweep_match;
+		
+		if(regex_search(cmd_line, maxsweep_match, maxsweep_rgx))
+		{
+		
+			par1_str = maxsweep_match[1];
+
+			par1_start = stod(maxsweep_match[2]);
+			par1_stop  = stod(maxsweep_match[3]);
+			par1_steps = stoi(maxsweep_match[4]);
+			up_down = maxsweep_match[5];
+			
+		}
+		
+	}
+	
 }
 
 
