@@ -48,7 +48,6 @@ int main(int argc, char* argv[])
 	
 	par *par1_ptr;
 	par *par2_ptr;
-	par *par3_ptr;
 
 	
 	int pts = 1;
@@ -134,18 +133,18 @@ int main(int argc, char* argv[])
 	if(mode.mode_str == "maxsweep_twopar")
 	{
 		par1_ptr = AP.get_par_ptr(mode.par1_str);
-		par3_ptr = AP.get_par_ptr(mode.par3_str);
+		par2_ptr = AP.get_par_ptr(mode.par2_str);
 	
 		
 		if(mode.up_down == "up")
 		{
 			(*par1_ptr).par_dbl = mode.par1_start;
-			(*par3_ptr).par_dbl = mode.par1_start;
+			(*par2_ptr).par_dbl = mode.par1_start;
 		}
 		else if(mode.up_down == "down")
 		{
 			(*par1_ptr).par_dbl = mode.par1_stop;
-			(*par3_ptr).par_dbl = mode.par1_stop;
+			(*par2_ptr).par_dbl = mode.par1_stop;
 		}
 
 		pts = mode.par1_steps;
@@ -157,14 +156,14 @@ int main(int argc, char* argv[])
 		+ "_"
 		+(*par1_ptr).par_str
 		+ "_"
-		+(*par3_ptr).par_str
+		+(*par2_ptr).par_str
 		+ "_"
 		+ to_string(mode.par1_start)
 		+ "_to_"
 		+ to_string(mode.par1_stop)
 		+ ".ms.dat";
 	
-		first_line = "#"+(*par1_ptr).par_str+","+(*par3_ptr).par_str+"\tImax\tper\tstate\n";
+		first_line = "#"+(*par1_ptr).par_str+","+(*par2_ptr).par_str+"\tImax\tper\tstate\n";
 	}
 	
 	
@@ -529,12 +528,12 @@ int main(int argc, char* argv[])
 			if(mode.up_down == "up")
 			{
 				(*par1_ptr).par_dbl += incr;
-				(*par3_ptr).par_dbl += incr;
+				(*par2_ptr).par_dbl += incr;
 			}
 			else if(mode.up_down == "down")
 			{
 				(*par1_ptr).par_dbl -= incr;
-				(*par3_ptr).par_dbl -= incr;
+				(*par2_ptr).par_dbl -= incr;
 			}
 			
 			cout << pts-i1 << endl;

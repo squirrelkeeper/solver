@@ -146,6 +146,8 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 			par1_steps = stoi(maxsweep_twopar_match[5]);
 			up_down = maxsweep_twopar_match[6];
 			
+			
+			
 		}
 		
 	}
@@ -168,6 +170,7 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 			
 			par2_str = statesweep_match[5];
 			up_down = statesweep_match[6];
+			
 			
 		}
 		
@@ -494,6 +497,7 @@ par* allpar_set::get_par_ptr(std::string par_str)
 	
 	for(unsigned i = 0; i < collection.size(); i++)
 	{
+		
 		if((*collection[i]).par_str == par_str)
 		{
 			out_par_ptr = collection[i];
@@ -502,7 +506,7 @@ par* allpar_set::get_par_ptr(std::string par_str)
 	
 	if((*out_par_ptr).par_str == "err")
 	{
-		cout << "err08"<< endl;
+		cout << "err008"<< endl;
 	}
 	
 	
