@@ -69,6 +69,19 @@ mode_cmd::mode_cmd(int init_argc, char **init_argv)
 		mode_str = mode_match[1];
 	}
 	
+
+	if(mode_str == "ts")
+	{
+		regex ts_rgx(R"(ts\[(.*?)\])");
+		smatch ts_match;
+		
+		if(regex_search(cmd_line, ts_match, ts_rgx))
+		{
+			par1_str = ts_match[1];
+		}
+		
+	}
+	
 	
 	if(mode_str == "lscan")
 	{

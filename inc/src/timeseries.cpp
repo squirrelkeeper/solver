@@ -127,10 +127,9 @@ void timeseries::write_file(string file_name)
 	srand (time(NULL));
 //	int batch_no = rand()%10000;
 
-	full_name << "data/";
 	full_name << file_name;
-	full_name << "_D";
-	full_name << AP.IP.D.par_dbl;
+//	full_name << "_D";
+//	full_name << AP.IP.D.par_dbl;
 //	full_name << "_ba";
 //	full_name << batch_no;
 	full_name << ".ts.dat";

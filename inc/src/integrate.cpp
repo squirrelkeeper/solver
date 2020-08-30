@@ -845,6 +845,12 @@ vector<double> integrator::integrate_noise_conc_analysis()
 	int curr_pulse = -1;
 
 	
+//	ofstream test;
+//	string test_file_name = "test_" + to_string(floor(rnd_distr(rnd_gen)*100)) + ".ts.dat";
+	
+	
+//	test.open(test_file_name);
+
 	
 	for(long i = 0; i < out; i++)
 	{
@@ -872,6 +878,8 @@ vector<double> integrator::integrate_noise_conc_analysis()
 		X[pos2].Q = Xnew.Q;
 		X[pos2].J = Xnew.J;
 		t[pos2] = Time;
+		
+//		test << Time << '\t' << I << endl;
 		
 		
 		pos0 = pos2;
@@ -942,6 +950,9 @@ vector<double> integrator::integrate_noise_conc_analysis()
 		}
 
 	}
+	
+	
+//	test.close();
 	
 	for(unsigned i = 1; i < pulse_pos_list.size(); i++)
 	{

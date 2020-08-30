@@ -25,7 +25,7 @@ jobs_per_arfile = 1000
 base_str1 = "-m:lscan[" + par1_name + ","
 base_str2 = ","
 base_str3 = "," + str(pxl_per_job) + "," + par2_name + "] -" + par2_name + " "
-base_str4 = " -rea 100 -D 0.2 -int_time 1500 -out_time 100 -wLP " +str(np.pi*0.75) 
+base_str4 = " -rea 100 -D 0.2 -int_time 1500 -out_time 100 -wLP " +str(np.pi*0.8) 
 
 
 

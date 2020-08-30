@@ -55,6 +55,15 @@ int main(int argc, char* argv[])
 	
 	
 	
+	if(mode.mode_str == "ts")
+	{
+		par1_ptr = AP.get_par_ptr(mode.par1_str);
+		file_name = "ts.dat";
+	}
+	
+	
+	
+	
 	if(mode.mode_str == "TS_pp")
 	{
 		file_name = "num_D"
@@ -257,9 +266,7 @@ int main(int argc, char* argv[])
 		+ '\t' 
 		+ "rea" 
 		+ '\t' 
-		+ "pnum" 
-		+ '\t' 
-		+ "pp" 
+		+ "tisi" 
 		+ '\n';
 	}
 
@@ -272,7 +279,44 @@ int main(int argc, char* argv[])
 	out.open(file_name);
 	out << first_line;
 	
+			
+	if(mode.mode_str == "ts")
+	{
+			
+		string write_name = "ts_" + (*par1_ptr).par_str + "_" + to_string((*par1_ptr).par_dbl);
+
+		if(AP.FP.K.par_dbl == 0)
+		{
+			IC.j_ic.par_dbl = 0.0;
+		}
+			
+			
+		vector<double> hom_const_IC = {
+			IC.er_ic.par_dbl,
+			IC.ei_ic.par_dbl,
+			IC.g_ic.par_dbl, 
+			IC.q_ic.par_dbl, 
+			IC.j_ic.par_dbl
+		};
+			
+		initial_con hom_IC("const", hom_const_IC, AP);
+		
+		integrator IN(AP);
+		IN.initialize(hom_IC);
 	
+		if(AP.IP.D.par_dbl == 0)
+		{
+			
+			timeseries hom_TS = IN.integrate();
+
+			hom_TS.write_file(write_name);
+		}
+		else
+		{
+			timeseries hom_TS = IN.integrate_noise();
+			hom_TS.write_file(write_name);
+		}
+	}
 
 	
 	
@@ -667,6 +711,85 @@ int main(int argc, char* argv[])
 		}
 
 	}
+	
+	
+
+	
+	
+	
+	
+		
+	
+	if(mode.mode_str == "lscan")
+	{
+		int realisations = (int)(AP.IP.rea.par_dbl);
+
+		
+		for(int i1 = 0; i1 < pts; i1++)
+		{
+		
+			for(int i2 = 0; i2 < realisations; i2++)
+			{
+				if(AP.FP.K.par_dbl == 0)
+				{
+					IC.j_ic.par_dbl = 0.0;
+				}
+					
+					
+				vector<double> hom_const_IC = {
+					IC.er_ic.par_dbl,
+					IC.ei_ic.par_dbl,
+					IC.g_ic.par_dbl, 
+					IC.q_ic.par_dbl, 
+					IC.j_ic.par_dbl
+				};
+					
+				initial_con hom_IC("const", hom_const_IC, AP);
+				
+				
+				integrator hom_IN(AP);
+				hom_IN.initialize(hom_IC);
+				
+				vector<double> PP = hom_IN.integrate_noise_conc_analysis();
+				
+				
+				
+				for(unsigned i3 = 0; i3 < PP.size(); i3++)
+				{
+					
+					out << setprecision(15);
+					out << (*par1_ptr).par_dbl << '\t';
+					out << setprecision(15);
+					out << (*par2_ptr).par_dbl << '\t';
+					out << setprecision(15);
+					out << i2 << '\t';
+					out << setprecision(15);
+					out << PP[i2];
+					out << endl;
+					
+/*					
+					cout << setprecision(15);
+					cout << (*par1_ptr).par_dbl << '\t';
+					cout << setprecision(15);
+					cout << (*par2_ptr).par_dbl << '\t';
+					cout << setprecision(15);
+					cout << i2 << '\t';
+					cout << setprecision(15);
+					cout << PP[i2];
+					cout << endl;
+*/
+					
+				}
+				
+			}
+			
+			(*par1_ptr).par_dbl += incr;
+		}
+
+	}
+
+	
+	
 
 
 	
