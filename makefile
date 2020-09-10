@@ -1,10 +1,10 @@
 PROG = main
 
 CC = g++
-CXXFLAGS = -std=c++17 -Wall -g
-DEBUGFLAGS = -g
-#LINKERFLAGS = -flto
-#-Ofast
+CXXFLAGS = -std=c++17 -Wall -flto -Ofast
+#DEBUGFLAGS = -g
+#FASTFLAGS = -flto -Ofast
+
 
 MAKEFLAGS = -s
 
