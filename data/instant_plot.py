@@ -1,9 +1,26 @@
 import numpy as np
+import os
 import matplotlib.pyplot as pl
 from scipy.interpolate import griddata
 
-file_name = "TS_num_D0.000000.ts.dat_D0.ts.dat"
 
+def get_files(suffix,path='./',m=True):
+	all_files = os.listdir(path)
+	dat_files = list(filter(lambda x: x[-len(suffix):] == suffix, all_files))
+	dat_files.sort()
+	if m:
+		print(str(len(dat_files))+ " files found")
+	return dat_files
+
+
+
+
+dat_files = get_files(".ts.dat")
+
+
+file_name = dat_files[0]
+
+print(file_name)
 start = 0
 end = 95000
 
@@ -24,25 +41,47 @@ ER = data[1]
 EI = data[2]
 G  = data[3]
 Q  = data[4]
+J  = data[5]
 
 I  = data[6]
 
-fig, (ax1, ax2, ax3) = pl.subplots(3)
+fig, (ax1, ax2) = pl.subplots(2)
 
-ax1.plot(t, ER)
-ax1.plot(t, EI)
+ax1.plot(
+	t,
+	I,
+	linewidth = 0.5,
+	color = 'k',
+)
 
-ax2.plot(t, I)
+ax1.plot(
+	t,
+	G,
+	linewidth = 0.5,
+	color = 'b',
+)
+
+ax1.plot(
+	t,
+	Q,
+	linewidth = 0.5,
+	color = 'r',
+)
+
+ax1.plot(
+	t,
+	J,
+	linewidth = 0.5,
+	color = 'g',
+)
 
 
-ax3.plot(t, G)
-ax3.plot(t, Q)
-
+ax2.plot(t, ER)
+ax2.plot(t, EI)
 
 #pl.plot(data)
 
 pl.show()
-
 
 
 
